@@ -10,11 +10,9 @@ class OrdemServicoController:
                       acao, contato_responsavel, observacoes, concluida=False, 
                       data_criacao=None, data_conclusao=None):
         
-        # Se não forneceu data de abertura, usa a atual
         if not data_criacao:
             data_criacao = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        # Se está concluída mas não forneceu data de conclusão, usa a mesma da abertura
         if concluida and not data_conclusao:
             data_conclusao = data_criacao
         
@@ -47,3 +45,145 @@ class OrdemServicoController:
     
     def listar_ordens_por_tecnico(self, id_tecnico):
         return self.repo.buscar_por_tecnico(id_tecnico)
+    
+    # ==================== FUNÇÕES PARA DADOS FORMATADOS ====================
+    
+    def get_dados_completos(self, tecnicos_dict, produtos_dict, clientes_dict, 
+                            enderecos_dict, relacionamentos_list):
+        """
+        Retorna uma lista de dicionários com todas as informações das OS
+        """
+        ordens = self.listar_ordens()
+        dados_completos = []
+        
+        for os in ordens:
+            tecnico = tecnicos_dict.get(os.id_tecnico)
+            produto = produtos_dict.get(os.id_produto)
+            
+            nome_cliente = "Não encontrado"
+            endereco_cliente = "Não encontrado"
+            
+            if produto:
+                for rel in relacionamentos_list:
+                    if rel.id == produto.id_cliente_endereco:
+                        cliente = clientes_dict.get(rel.id_cliente)
+                        endereco = enderecos_dict.get(rel.id_endereco)
+                        if cliente:
+                            nome_cliente = cliente.nome
+                        if endereco:
+                            endereco_cliente = f"{endereco.logradouro}, {endereco.cidade}/{endereco.estado}"
+                        break
+            
+            dados_completos.append({
+                'id_os': os.id_os,
+                'status': os.concluida,
+                'data_criacao': os.data_criacao,
+                'data_conclusao': os.data_conclusao,
+                'tecnico_nome': tecnico.nome if tecnico else "Não encontrado",
+                'tecnico_matricula': tecnico.matricula if tecnico else "Não encontrado",
+                'cliente_nome': nome_cliente,
+                'cliente_endereco': endereco_cliente,
+                'produto_descricao': produto.descricao if produto else "Não encontrado",
+                'produto_designador': produto.designador if produto else "Não encontrado",
+                'produto_wan': produto.wan_piloto if produto else "Não encontrado",
+                'causa_raiz': os.causa_raiz,
+                'materiais': os.materiais_utilizados,
+                'acao': os.acao,
+                'contato': os.contato_responsavel,
+                'observacoes': os.observacoes
+            })
+        
+        return dados_completos
+    
+    
+
+    def get_dados_resumidos(self, tecnicos_dict, produtos_dict, clientes_dict, relacionamentos_list):
+        """
+        Retorna uma lista de dicionários com dados resumidos (designador, wan/piloto, cliente, técnico, data conclusão)
+        """
+        ordens = self.listar_ordens()
+        dados_resumidos = []
+        
+        for os in ordens:
+            tecnico = tecnicos_dict.get(os.id_tecnico)
+            produto = produtos_dict.get(os.id_produto)
+            
+            nome_cliente = "-"
+            wan_piloto = "-"
+            if produto:
+                wan_piloto = produto.wan_piloto if produto.wan_piloto else "-"
+                for rel in relacionamentos_list:
+                    if rel.id == produto.id_cliente_endereco:
+                        cliente = clientes_dict.get(rel.id_cliente)
+                        if cliente:
+                            nome_cliente = cliente.nome
+                        break
+            
+            designador = produto.designador if produto and produto.designador else "-"
+            nome_tecnico = tecnico.nome if tecnico else "-"
+            data_conclusao = os.data_conclusao if os.concluida and os.data_conclusao else "-"
+            
+            dados_resumidos.append({
+                'id_os': os.id_os,
+                'designador': designador,
+                'wan_piloto': wan_piloto,
+                'cliente': nome_cliente,
+                'tecnico': nome_tecnico,
+                'data_conclusao': data_conclusao,
+                'concluida': os.concluida
+            })
+        
+        return dados_resumidos
+
+
+    def get_dados_resumidos_por_tecnico(self, id_tecnico, tecnicos_dict, produtos_dict, 
+                                        clientes_dict, relacionamentos_list):
+        """
+        Retorna dados resumidos das OS de um técnico específico
+        """
+        ordens = self.listar_ordens_por_tecnico(id_tecnico)
+        dados_resumidos = []
+        
+        for os in ordens:
+            produto = produtos_dict.get(os.id_produto)
+            
+            nome_cliente = "-"
+            wan_piloto = "-"
+            if produto:
+                wan_piloto = produto.wan_piloto if produto.wan_piloto else "-"
+                for rel in relacionamentos_list:
+                    if rel.id == produto.id_cliente_endereco:
+                        cliente = clientes_dict.get(rel.id_cliente)
+                        if cliente:
+                            nome_cliente = cliente.nome
+                        break
+            
+            designador = produto.designador if produto and produto.designador else "-"
+            data_conclusao = os.data_conclusao if os.concluida and os.data_conclusao else "-"
+            
+            dados_resumidos.append({
+                'id_os': os.id_os,
+                'designador': designador,
+                'wan_piloto': wan_piloto,
+                'cliente': nome_cliente,
+                'data_conclusao': data_conclusao,
+                'concluida': os.concluida
+            })
+        
+        return dados_resumidos
+    
+    
+    def get_estatisticas(self):
+        """
+        Retorna estatísticas das OS
+        """
+        ordens = self.listar_ordens()
+        total = len(ordens)
+        concluidas = len([os for os in ordens if os.concluida])
+        em_andamento = total - concluidas
+        
+        return {
+            'total': total,
+            'concluidas': concluidas,
+            'em_andamento': em_andamento
+        }
