@@ -12,3 +12,9 @@ class EnderecoController:
 
     def listar_enderecos(self):
         return self.repo.listar()
+    
+# app/controller/endereco_controller.py
+    def inserir_endereco(self, logradouro, cidade, estado):
+        endereco = Endereco(logradouro=logradouro, cidade=cidade, estado=estado, id=None)
+        self.repo.inserir(endereco)
+        return endereco  # Retorna o objeto com ID preenchido

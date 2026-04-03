@@ -21,23 +21,23 @@ class EnderecoRepository:
         conn.commit()
         conn.close()
 
-    def inserir(self, endereco):
-        conn = self.con.conectar()
-        c = conn.cursor()
+    # def inserir(self, endereco):
+    #     conn = self.con.conectar()
+    #     c = conn.cursor()
         
-        c.execute("select id from enderecos where logradouro = ?",(endereco.logradouro,))
-        if c.fetchone() is None:
-            c.execute(
-                "INSERT INTO enderecos (logradouro, cidade, estado) VALUES (?, ?, ?)",
-                (endereco.logradouro, endereco.cidade, endereco.estado)
-            )
+    #     c.execute("select id from enderecos where logradouro = ?",(endereco.logradouro,))
+    #     if c.fetchone() is None:
+    #         c.execute(
+    #             "INSERT INTO enderecos (logradouro, cidade, estado) VALUES (?, ?, ?)",
+    #             (endereco.logradouro, endereco.cidade, endereco.estado)
+    #         )
 
-            conn.commit()
-            conn.close()
-            return "\n CADASTRADO"
-        else:
-            conn.close()
-            return "ja cadastrado"
+    #         conn.commit()
+    #         conn.close()
+    #         return "\n CADASTRADO"
+    #     else:
+    #         conn.close()
+    #         return "ja cadastrado"
 
     def listar(self):
         conn = self.con.conectar()
@@ -49,3 +49,21 @@ class EnderecoRepository:
         conn.close()
 
         return [Endereco(id=row[0], logradouro=row[1], cidade=row[2], estado=row[3]) for row in dados]
+    
+    
+    def inserir(self, endereco):
+        conn = self.con.conectar()
+        c = conn.cursor()
+        
+        c.execute(
+            "INSERT INTO enderecos (logradouro, cidade, estado) VALUES (?, ?, ?)",
+            (endereco.logradouro, endereco.cidade, endereco.estado)
+        )
+        
+        # Pegar o ID gerado
+        endereco.id_endereco = c.lastrowid
+        
+        conn.commit()
+        conn.close()
+        
+        return endereco

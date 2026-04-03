@@ -4,6 +4,7 @@ from app.model.cliente_endereco import ClienteEndereco
 class ClienteEnderecoRepository:
     def __init__(self):
         self.con = Conexao()
+        self.criar_tabela()  # ← Adicione esta linha para criar a tabela automaticamente
 
     def criar_tabela(self):
         conn = self.con.conectar()
@@ -43,4 +44,26 @@ class ClienteEnderecoRepository:
 
         conn.close()
 
+        return [ClienteEndereco(id=row[0], id_cliente=row[1], id_endereco=row[2]) for row in dados]
+    
+    def buscar_por_cliente(self, id_cliente):
+        conn = self.con.conectar()
+        c = conn.cursor()
+        
+        c.execute("SELECT * FROM cliente_endereco WHERE id_cliente = ?", (id_cliente,))
+        dados = c.fetchall()
+        
+        conn.close()
+        
+        return [ClienteEndereco(id=row[0], id_cliente=row[1], id_endereco=row[2]) for row in dados]
+
+    def buscar_por_endereco(self, id_endereco):
+        conn = self.con.conectar()
+        c = conn.cursor()
+        
+        c.execute("SELECT * FROM cliente_endereco WHERE id_endereco = ?", (id_endereco,))
+        dados = c.fetchall()
+        
+        conn.close()
+        
         return [ClienteEndereco(id=row[0], id_cliente=row[1], id_endereco=row[2]) for row in dados]
