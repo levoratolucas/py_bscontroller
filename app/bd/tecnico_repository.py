@@ -11,7 +11,7 @@ class TecnicoRepository:
 
         c.execute("""
         CREATE TABLE IF NOT EXISTS tecnicos (
-            id_tecnico INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             nome TEXT,
             matricula TEXT
         )
@@ -24,13 +24,25 @@ class TecnicoRepository:
         conn = self.con.conectar()
         c = conn.cursor()
 
-        c.execute(
-            "INSERT INTO tecnicos (nome, matricula) VALUES (?, ?)",
-            (tecnico.nome, tecnico.matricula)
-        )
+        # verifica se já existe pela matrícula
+        c.execute("SELECT id FROM tecnicos WHERE matricula = ?", (tecnico.matricula,))
+        existente = c.fetchone()
 
-        conn.commit()
-        conn.close()
+        if existente is None:
+            c.execute(
+                "INSERT INTO tecnicos (nome, matricula) VALUES (?, ?)",
+                (tecnico.nome, tecnico.matricula)
+            )
+            conn.commit()
+            tecnico.id = c.lastrowid
+            conn.close()
+            return "Técnico inserido com sucesso"
+        else:
+            tecnico.id = existente[0]  # já existente
+            conn.close()
+            return "\nJA EXISTE ESSE TECNICO"
+
+        
 
     def listar(self):
         conn = self.con.conectar()

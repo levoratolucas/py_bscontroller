@@ -24,14 +24,20 @@ class EnderecoRepository:
     def inserir(self, endereco):
         conn = self.con.conectar()
         c = conn.cursor()
+        
+        c.execute("select id from enderecos where logradouro = ?",(endereco.logradouro,))
+        if c.fetchone() is None:
+            c.execute(
+                "INSERT INTO enderecos (logradouro, cidade, estado) VALUES (?, ?, ?)",
+                (endereco.logradouro, endereco.cidade, endereco.estado)
+            )
 
-        c.execute(
-            "INSERT INTO enderecos (logradouro, cidade, estado) VALUES (?, ?, ?)",
-            (endereco.logradouro, endereco.cidade, endereco.estado)
-        )
-
-        conn.commit()
-        conn.close()
+            conn.commit()
+            conn.close()
+            return "\n CADASTRADO"
+        else:
+            conn.close()
+            return "ja cadastrado"
 
     def listar(self):
         conn = self.con.conectar()

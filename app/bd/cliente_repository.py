@@ -22,14 +22,23 @@ class ClienteRepository:
     def inserir(self, cliente):
         conn = self.con.conectar()
         c = conn.cursor()
+        
+        c.execute("SELECT ID FROM clientes WHERE nome = ?", (cliente.nome,))
+        existente = c.fetchone()
+        
+        if existente is None:
 
-        c.execute(
-            "INSERT INTO clientes (nome) VALUES (?)",
-            (cliente.nome,)
-        )
+            c.execute(
+                "INSERT INTO clientes (nome) VALUES (?)",
+                (cliente.nome,)
+            )
 
-        conn.commit()
-        conn.close()
+            conn.commit()
+            conn.close()
+            return "cliente inserido com sucesso"
+        else:
+            conn.close()
+            return "\n CLIENTE JA CADASTRADO"
 
     def listar(self):
         conn = self.con.conectar()

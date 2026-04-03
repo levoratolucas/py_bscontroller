@@ -31,8 +31,8 @@ def menu():
         # TECNICO
         if op == "1":
             nome = input("Nome: ")
-            matricula = input("Matrícula: ")
-            tecnico_controller.inserir_tecnico(nome, matricula)
+            matricula = input("Matrícula: ")            
+            print(tecnico_controller.inserir_tecnico(nome, matricula))
 
         elif op == "2":
             tecnicos = tecnico_controller.listar_tecnicos()
@@ -42,7 +42,7 @@ def menu():
         # CLIENTE
         elif op == "3":
             nome = input("Nome do cliente: ")
-            cliente_controller.inserir_cliente(nome)
+            print(cliente_controller.inserir_cliente(nome))
 
         elif op == "4":
             clientes = cliente_controller.listar_clientes()
@@ -54,7 +54,7 @@ def menu():
             logradouro = input("Logradouro: ")
             cidade = input("Cidade: ")
             estado = input("Estado: ")
-            endereco_controller.inserir_endereco(logradouro, cidade, estado)
+            print(endereco_controller.inserir_endereco(logradouro, cidade, estado))
 
         elif op == "6":
             enderecos = endereco_controller.listar_enderecos()

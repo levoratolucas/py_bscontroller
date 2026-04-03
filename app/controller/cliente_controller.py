@@ -10,7 +10,7 @@ class ClienteController:
 
     def inserir_cliente(self, nome):
         cliente = Cliente(nome)  # sem id
-        self.repo.inserir(cliente)
+        return self.repo.inserir(cliente)
 
     def listar_clientes(self):
         return self.repo.listar()

@@ -8,7 +8,7 @@ class EnderecoController:
 
     def inserir_endereco(self, logradouro, cidade, estado):
         endereco = Endereco(id=None, logradouro=logradouro, cidade=cidade, estado=estado)
-        self.repo.inserir(endereco)
+        return self.repo.inserir(endereco)
 
     def listar_enderecos(self):
         return self.repo.listar()
