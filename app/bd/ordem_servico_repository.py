@@ -17,6 +17,8 @@ class OrdemServicoRepository:
             id_tecnico INTEGER,
             id_produto INTEGER,
             causa_raiz TEXT,
+            number_bd TEXT,
+            tipo TEXT,
             materiais_utilizados TEXT,
             acao TEXT,
             contato_responsavel TEXT,
@@ -38,13 +40,13 @@ class OrdemServicoRepository:
 
         c.execute(
             """INSERT INTO ordem_servico 
-               (id_tecnico, id_produto, causa_raiz, materiais_utilizados, acao, 
-                contato_responsavel, observacoes, data_criacao, concluida, data_conclusao) 
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               (id_tecnico, id_produto, causa_raiz, number_bd, tipo, materiais_utilizados, 
+                acao, contato_responsavel, observacoes, data_criacao, concluida, data_conclusao) 
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (ordem_servico.id_tecnico, ordem_servico.id_produto, ordem_servico.causa_raiz,
-             ordem_servico.materiais_utilizados, ordem_servico.acao, ordem_servico.contato_responsavel,
-             ordem_servico.observacoes, ordem_servico.data_criacao, 
-             1 if ordem_servico.concluida else 0, 
+             ordem_servico.number_bd, ordem_servico.tipo, ordem_servico.materiais_utilizados,
+             ordem_servico.acao, ordem_servico.contato_responsavel, ordem_servico.observacoes,
+             ordem_servico.data_criacao, 1 if ordem_servico.concluida else 0, 
              ordem_servico.data_conclusao)
         )
 
@@ -68,13 +70,15 @@ class OrdemServicoRepository:
             id_tecnico=row[1],
             id_produto=row[2],
             causa_raiz=row[3],
-            materiais_utilizados=row[4],
-            acao=row[5],
-            contato_responsavel=row[6],
-            observacoes=row[7],
-            data_criacao=row[8],
-            concluida=bool(row[9]),
-            data_conclusao=row[10]
+            number_bd=row[4],
+            tipo=row[5],
+            materiais_utilizados=row[6],
+            acao=row[7],
+            contato_responsavel=row[8],
+            observacoes=row[9],
+            data_criacao=row[10],
+            concluida=bool(row[11]),
+            data_conclusao=row[12]
         ) for row in dados]
     
     def buscar_por_id(self, id_os):
@@ -92,13 +96,15 @@ class OrdemServicoRepository:
                 id_tecnico=row[1],
                 id_produto=row[2],
                 causa_raiz=row[3],
-                materiais_utilizados=row[4],
-                acao=row[5],
-                contato_responsavel=row[6],
-                observacoes=row[7],
-                data_criacao=row[8],
-                concluida=bool(row[9]),
-                data_conclusao=row[10]
+                number_bd=row[4],
+                tipo=row[5],
+                materiais_utilizados=row[6],
+                acao=row[7],
+                contato_responsavel=row[8],
+                observacoes=row[9],
+                data_criacao=row[10],
+                concluida=bool(row[11]),
+                data_conclusao=row[12]
             )
         return None
     
@@ -128,13 +134,15 @@ class OrdemServicoRepository:
             id_tecnico=row[1],
             id_produto=row[2],
             causa_raiz=row[3],
-            materiais_utilizados=row[4],
-            acao=row[5],
-            contato_responsavel=row[6],
-            observacoes=row[7],
-            data_criacao=row[8],
-            concluida=bool(row[9]),
-            data_conclusao=row[10]
+            number_bd=row[4],
+            tipo=row[5],
+            materiais_utilizados=row[6],
+            acao=row[7],
+            contato_responsavel=row[8],
+            observacoes=row[9],
+            data_criacao=row[10],
+            concluida=bool(row[11]),
+            data_conclusao=row[12]
         ) for row in dados]
     
     def buscar_por_periodo(self, data_inicio, data_fim):
@@ -156,11 +164,13 @@ class OrdemServicoRepository:
             id_tecnico=row[1],
             id_produto=row[2],
             causa_raiz=row[3],
-            materiais_utilizados=row[4],
-            acao=row[5],
-            contato_responsavel=row[6],
-            observacoes=row[7],
-            data_criacao=row[8],
-            concluida=bool(row[9]),
-            data_conclusao=row[10]
+            number_bd=row[4],
+            tipo=row[5],
+            materiais_utilizados=row[6],
+            acao=row[7],
+            contato_responsavel=row[8],
+            observacoes=row[9],
+            data_criacao=row[10],
+            concluida=bool(row[11]),
+            data_conclusao=row[12]
         ) for row in dados]

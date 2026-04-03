@@ -8,6 +8,21 @@ from app.view.ordem_servico.utils import (
 )
 from datetime import datetime
 
+def capturar_multilinhas(mensagem):
+    """Captura múltiplas linhas de texto. Digite 'FIM' em uma linha vazia para finalizar."""
+    print(f"\n{mensagem}")
+    print("(Digite 'FIM' em uma linha vazia para finalizar)")
+    print("-" * 50)
+    linhas = []
+    while True:
+        linha = input()
+        if linha.strip() == "FIM":
+            break
+        linhas.append(linha)
+    print("-" * 50)
+    return "\n".join(linhas)
+
+
 def criar_ordem_servico(os_controller, tecnico_controller, produto_controller, 
                         cliente_controller, endereco_controller, cliente_endereco_repo):
     
@@ -150,11 +165,15 @@ def criar_ordem_servico(os_controller, tecnico_controller, produto_controller,
     
     # ==================== DADOS DA OS ====================
     print("\n--- DADOS DA ORDEM DE SERVIÇO ---")
+    number_bd = input("Numero do bd: ")
+    tipo = input("Reparo ou ativação: ")
     causa_raiz = input("Causa Raiz do Problema: ")
     materiais_utilizados = input("Materiais Utilizados: ")
     acao = input("Ação Realizada: ")
     contato_responsavel = input("Contato do Responsável: ")
-    observacoes = input("Observações: ")
+    
+    # Observações com múltiplas linhas
+    observacoes = capturar_multilinhas("OBSERVAÇÕES (Digite 'FIM' para finalizar):")
     
     # ==================== STATUS E DATAS ====================
     print("\n--- STATUS E DATAS DA OS ---")
@@ -262,7 +281,9 @@ def criar_ordem_servico(os_controller, tecnico_controller, produto_controller,
         materiais_utilizados,
         acao, 
         contato_responsavel, 
-        observacoes, 
+        observacoes,
+        number_bd,
+        tipo,
         concluida,
         data_criacao,
         data_conclusao
@@ -272,10 +293,10 @@ def criar_ordem_servico(os_controller, tecnico_controller, produto_controller,
         print("\n" + "="*60)
         print("✅ ORDEM DE SERVIÇO CRIADA COM SUCESSO!")
         print("="*60)
-        print(f"   Número OS: {ordem.id_os}")
-        print(f"   Data de Abertura: {ordem.data_criacao}")
+        print(f"   Número OS: {number_bd}")
+        print(f"   Data de Abertura: {data_criacao}")
         if concluida:
-            print(f"   Data de Conclusão: {ordem.data_conclusao}")
+            print(f"   Data de Conclusão: {data_conclusao}")
         print(f"   Status: {'CONCLUÍDA' if concluida else 'EM ANDAMENTO'}")
         print("="*60)
     else:

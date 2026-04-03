@@ -7,9 +7,9 @@ class OrdemServicoController:
         self.repo = OrdemServicoRepository()
 
     def inserir_ordem(self, id_tecnico, id_produto, causa_raiz, materiais_utilizados, 
-                      acao, contato_responsavel, observacoes, concluida=False, 
-                      data_criacao=None, data_conclusao=None):
-        
+                  acao, contato_responsavel, observacoes, number_bd=None, tipo=None,
+                  concluida=False, data_criacao=None, data_conclusao=None):
+    
         if not data_criacao:
             data_criacao = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
@@ -20,6 +20,8 @@ class OrdemServicoController:
             id_tecnico=id_tecnico,
             id_produto=id_produto,
             causa_raiz=causa_raiz,
+            number_bd=number_bd,
+            tipo=tipo,
             materiais_utilizados=materiais_utilizados,
             acao=acao,
             contato_responsavel=contato_responsavel,
@@ -79,6 +81,8 @@ class OrdemServicoController:
                 'status': os.concluida,
                 'data_criacao': os.data_criacao,
                 'data_conclusao': os.data_conclusao,
+                'number_bd': os.number_bd,
+                'tipo': os.tipo,
                 'tecnico_nome': tecnico.nome if tecnico else "Não encontrado",
                 'tecnico_matricula': tecnico.matricula if tecnico else "Não encontrado",
                 'cliente_nome': nome_cliente,
@@ -96,10 +100,9 @@ class OrdemServicoController:
         return dados_completos
     
     
-
     def get_dados_resumidos(self, tecnicos_dict, produtos_dict, clientes_dict, relacionamentos_list):
         """
-        Retorna uma lista de dicionários com dados resumidos (designador, wan/piloto, cliente, técnico, data conclusão)
+        Retorna uma lista de dicionários com dados resumidos (number_bd, designador, wan/piloto, cliente, técnico, data conclusão)
         """
         ordens = self.listar_ordens()
         dados_resumidos = []
@@ -123,19 +126,41 @@ class OrdemServicoController:
             nome_tecnico = tecnico.nome if tecnico else "-"
             data_conclusao = os.data_conclusao if os.concluida and os.data_conclusao else "-"
             
+            # Garantir que number_bd seja uma string
+            number_bd = str(os.number_bd) if os.number_bd else "-"
+            
             dados_resumidos.append({
-                'id_os': os.id_os,
+                'number_bd': number_bd,
                 'designador': designador,
                 'wan_piloto': wan_piloto,
                 'cliente': nome_cliente,
                 'tecnico': nome_tecnico,
                 'data_conclusao': data_conclusao,
-                'concluida': os.concluida
+                'concluida': os.concluida,
+                'tipo': os.tipo if os.tipo else "-"
             })
         
         return dados_resumidos
-
-
+    
+    # ========================
+    def get_estatisticas(self):
+        """
+        Retorna estatísticas das OS
+        """
+        ordens = self.listar_ordens()
+        total = len(ordens)
+        concluidas = len([os for os in ordens if os.concluida])
+        em_andamento = total - concluidas
+        
+        return {
+            'total': total,
+            'concluidas': concluidas,
+            'em_andamento': em_andamento
+        }
+        
+        
+        
+        
     def get_dados_resumidos_por_tecnico(self, id_tecnico, tecnicos_dict, produtos_dict, 
                                         clientes_dict, relacionamentos_list):
         """
@@ -161,29 +186,17 @@ class OrdemServicoController:
             designador = produto.designador if produto and produto.designador else "-"
             data_conclusao = os.data_conclusao if os.concluida and os.data_conclusao else "-"
             
+            # Garantir que number_bd seja uma string
+            number_bd = str(os.number_bd) if os.number_bd else "-"
+            
             dados_resumidos.append({
-                'id_os': os.id_os,
+                'number_bd': number_bd,
                 'designador': designador,
                 'wan_piloto': wan_piloto,
                 'cliente': nome_cliente,
                 'data_conclusao': data_conclusao,
-                'concluida': os.concluida
+                'concluida': os.concluida,
+                'tipo': os.tipo if os.tipo else "-"
             })
         
         return dados_resumidos
-    
-    
-    def get_estatisticas(self):
-        """
-        Retorna estatísticas das OS
-        """
-        ordens = self.listar_ordens()
-        total = len(ordens)
-        concluidas = len([os for os in ordens if os.concluida])
-        em_andamento = total - concluidas
-        
-        return {
-            'total': total,
-            'concluidas': concluidas,
-            'em_andamento': em_andamento
-        }
