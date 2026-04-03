@@ -1,3 +1,4 @@
+from app.view.ordem_servico import menu_ordem_servico
 from app.view.tecnico_view import menu_tecnico
 from app.view.cliente_view import menu_cliente
 from app.view.endereco_view import menu_endereco
@@ -14,6 +15,7 @@ def menu():
         print("3 - Gerenciar Endereços")
         print("4 - Gerenciar Produtos")
         print("5 - Relacionar Cliente x Endereço")
+        print("6 - Ordem de Serviço (OS)")
         print("0 - Sair")
         print("-"*50)
 
@@ -29,6 +31,8 @@ def menu():
             menu_produto()
         elif op == "5":
             menu_relacionamento()
+        elif op == "6":
+            menu_ordem_servico()  # ← Nova opção
         elif op == "0":
             print("Saindo do sistema...")
             break

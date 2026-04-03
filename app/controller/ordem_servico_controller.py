@@ -1,14 +1,24 @@
 from app.bd.ordem_servico_repository import OrdemServicoRepository
 from app.model.ordem_servico import OrdemServico
+from datetime import datetime
 
 class OrdemServicoController:
     def __init__(self):
         self.repo = OrdemServicoRepository()
-        self.repo.criar_tabela()
 
-    def inserir_ordem(self, id_tecnico, id_produto, causa_raiz, materiais_utilizados, acao, contato_responsavel, observacoes, data_criacao, concluida, data_conclusao):
+    def inserir_ordem(self, id_tecnico, id_produto, causa_raiz, materiais_utilizados, 
+                      acao, contato_responsavel, observacoes, concluida=False, 
+                      data_criacao=None, data_conclusao=None):
+        
+        # Se não forneceu data de abertura, usa a atual
+        if not data_criacao:
+            data_criacao = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Se está concluída mas não forneceu data de conclusão, usa a mesma da abertura
+        if concluida and not data_conclusao:
+            data_conclusao = data_criacao
+        
         ordem = OrdemServico(
-            id_os=None,
             id_tecnico=id_tecnico,
             id_produto=id_produto,
             causa_raiz=causa_raiz,
@@ -20,7 +30,20 @@ class OrdemServicoController:
             concluida=concluida,
             data_conclusao=data_conclusao
         )
-        self.repo.inserir(ordem)
+        
+        return self.repo.inserir(ordem)
 
     def listar_ordens(self):
         return self.repo.listar()
+    
+    def buscar_ordem(self, id_os):
+        return self.repo.buscar_por_id(id_os)
+    
+    def concluir_ordem(self, id_os, data_conclusao=None):
+        if not data_conclusao:
+            data_conclusao = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.repo.atualizar_status(id_os, True, data_conclusao)
+        return f"Ordem {id_os} concluída em {data_conclusao}"
+    
+    def listar_ordens_por_tecnico(self, id_tecnico):
+        return self.repo.buscar_por_tecnico(id_tecnico)
