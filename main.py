@@ -1,9 +1,13 @@
-from app.view.menu_view import menu
+# main_teste.py
 
-if __name__ == "__main__":
-    menu()
-
-# from app.view.gui.main_window import MainWindow
+# from app.view.test_view import menu_teste_principal
 
 # if __name__ == "__main__":
-#     app = MainWindow()
+#     menu_teste_principal()
+
+from app.frontend.main_window import MainWindow
+
+if __name__ == "__main__":
+    app = MainWindow()
+    app.mainloop()
+    
