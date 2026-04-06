@@ -1,141 +1,74 @@
 # app/frontend/main_window.py
 
 import customtkinter as ctk
-from app.frontend.dashboard import DashboardScreen
+from app.frontend.styles import COLORS, setup_theme
+from app.frontend.components import Sidebar, TopBar
+from app.frontend.screens import DashboardScreen, RelatoriosScreen
 
-# Cores
-COLORS = {
-    'primary': '#6B37FF',
-    'primary_dark': '#4B1FB0',
-    'dark': '#1A1A2E',
-    'dark_card': '#16213E',
-    'white': '#FFFFFF',
-    'gray': '#6C6C8A'
-}
 
 class MainWindow(ctk.CTk):
     def __init__(self):
         super().__init__()
         
+        setup_theme()
+        
         self.title("VIVO OS - Sistema de Ordem de Serviço")
-        self.geometry("1200x700")
-        self.minsize(1000, 600)
+        self.geometry("1300x750")
+        self.minsize(1100, 600)
         
-        # Configurar tema
-        ctk.set_appearance_mode("dark")
-        ctk.set_default_color_theme("dark-blue")
-        
-        # Frame principal
-        self.main_frame = ctk.CTkFrame(self, fg_color=COLORS['dark'])
-        self.main_frame.pack(fill="both", expand=True)
+        # Configurar grid da janela principal
+        self.grid_rowconfigure(0, weight=0)  # TopBar
+        self.grid_rowconfigure(1, weight=1)  # Conteúdo
+        self.grid_columnconfigure(0, weight=0)  # Sidebar
+        self.grid_columnconfigure(1, weight=1)  # Conteúdo
         
         # Top bar
-        self.create_top_bar()
+        self.topbar = TopBar(self)
+        self.topbar.grid(row=0, column=0, columnspan=2, sticky="ew")
         
         # Sidebar
-        self.create_sidebar()
+        self.sidebar = Sidebar(self, self.navigate_to)
+        self.sidebar.grid(row=1, column=0, sticky="nsew")
         
         # Content area
-        self.content_frame = ctk.CTkFrame(self.main_frame, fg_color=COLORS['dark'])
-        self.content_frame.pack(side="right", fill="both", expand=True)
+        self.content_frame = ctk.CTkFrame(self, fg_color=COLORS['bg_main'])
+        self.content_frame.grid(row=1, column=1, sticky="nsew")
+        self.content_frame.grid_columnconfigure(0, weight=1)
+        self.content_frame.grid_rowconfigure(0, weight=1)
         
-        # Mostrar dashboard
-        self.show_dashboard()
+        # Start with dashboard
+        self.current_screen = None
+        self.navigate_to("dashboard")
     
-    def create_top_bar(self):
-        top_bar = ctk.CTkFrame(
-            self.main_frame,
-            height=60,
-            fg_color=COLORS['primary_dark'],
-            corner_radius=0
-        )
-        top_bar.pack(fill="x")
-        top_bar.pack_propagate(False)
+    def navigate_to(self, page):
+        # Destroy current screen
+        if self.current_screen:
+            self.current_screen.destroy()
         
-        logo = ctk.CTkLabel(
-            top_bar,
-            text="📡 VIVO OS",
-            font=("Inter", 20, "bold"),
-            text_color=COLORS['white']
-        )
-        logo.pack(side="left", padx=20, pady=10)
-    
-    def create_sidebar(self):
-        sidebar = ctk.CTkFrame(
-            self.main_frame,
-            width=200,
-            fg_color=COLORS['dark_card'],
-            corner_radius=0
-        )
-        sidebar.pack(side="left", fill="y")
-        sidebar.pack_propagate(False)
+        # Update topbar title
+        titles = {
+            "dashboard": "Dashboard",
+            "nova_os": "Nova Ordem de Serviço",
+            "consultar": "Consultar OS",
+            "relatorios": "Relatórios",
+            "admin": "Administração"
+        }
+        self.topbar.set_title(titles.get(page, page))
         
-        menu_items = [
-            ("📊 Dashboard", self.show_dashboard),
-            ("➕ Nova OS", self.show_nova_os),
-            ("🔍 Consultar", self.show_consultar),
-            ("📈 Relatórios", self.show_relatorios),
-            ("⚙️ Admin", self.show_admin)
-        ]
-        
-        for text, command in menu_items:
-            btn = ctk.CTkButton(
-                sidebar,
-                text=text,
-                font=("Inter", 14),
-                fg_color="transparent",
-                hover_color=COLORS['primary'],
-                anchor="w",
-                height=45,
-                corner_radius=10
+        # Create new screen
+        if page == "dashboard":
+            self.current_screen = DashboardScreen(self.content_frame, self.navigate_to)
+        elif page == "relatorios":
+            self.current_screen = RelatoriosScreen(self.content_frame)
+        else:
+            # Placeholder para outras telas
+            self.current_screen = ctk.CTkFrame(self.content_frame, fg_color=COLORS['bg_main'])
+            self.current_screen.pack(fill="both", expand=True)
+            
+            label = ctk.CTkLabel(
+                self.current_screen,
+                text=f"📄 {titles.get(page, page)}\n\nEm desenvolvimento...",
+                font=("Inter", 20),
+                text_color=COLORS['text_secondary']
             )
-            btn.pack(fill="x", padx=15, pady=5)
-            btn.configure(command=command)
-    
-    def clear_content(self):
-        for widget in self.content_frame.winfo_children():
-            widget.destroy()
-    
-    def show_dashboard(self):
-        self.clear_content()
-        DashboardScreen(self.content_frame)
-    
-    def show_nova_os(self):
-        self.clear_content()
-        label = ctk.CTkLabel(
-            self.content_frame,
-            text="Nova OS - Em desenvolvimento",
-            font=("Inter", 24, "bold"),
-            text_color=COLORS['white']
-        )
-        label.pack(expand=True)
-    
-    def show_consultar(self):
-        self.clear_content()
-        label = ctk.CTkLabel(
-            self.content_frame,
-            text="Consultar OS - Em desenvolvimento",
-            font=("Inter", 24, "bold"),
-            text_color=COLORS['white']
-        )
-        label.pack(expand=True)
-    
-    def show_relatorios(self):
-        self.clear_content()
-        label = ctk.CTkLabel(
-            self.content_frame,
-            text="Relatórios - Em desenvolvimento",
-            font=("Inter", 24, "bold"),
-            text_color=COLORS['white']
-        )
-        label.pack(expand=True)
-    
-    def show_admin(self):
-        self.clear_content()
-        label = ctk.CTkLabel(
-            self.content_frame,
-            text="Administração - Em desenvolvimento",
-            font=("Inter", 24, "bold"),
-            text_color=COLORS['white']
-        )
-        label.pack(expand=True)
+            label.pack(expand=True)

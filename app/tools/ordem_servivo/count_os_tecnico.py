@@ -139,7 +139,7 @@ def listar_os_por_tecnico_periodo(id_tecnico, data_inicio, data_fim):
         produto = produtos.get(os.id_produto)
         
         nome_cliente = "-"
-        if produit:
+        if produto:
             id_cliente = produto_cliente.get(produto.id_produto)
             if id_cliente:
                 cliente = clientes.get(id_cliente)
