@@ -66,7 +66,7 @@ class RepetidosScreen(ctk.CTkFrame):
         self.table_card = ctk.CTkFrame(main_frame, fg_color=COLORS['bg_card'], corner_radius=12, border_width=1, border_color=COLORS['border'])
         self.table_card.pack(side="left", fill="both", expand=True, padx=(0, 5))
         
-        # Card direito - Detalhes (Repetido vs Referência)
+        # Card direito - Detalhes
         self.detail_card = ctk.CTkFrame(main_frame, fg_color=COLORS['bg_card'], corner_radius=12, border_width=1, border_color=COLORS['border'])
         self.detail_card.pack(side="right", fill="both", expand=True, padx=(5, 0))
         
@@ -81,7 +81,7 @@ class RepetidosScreen(ctk.CTkFrame):
         
         detail_title = ctk.CTkLabel(
             self.detail_card,
-            text="📄 Comparação: Repetido x Referência",
+            text="📄 Detalhes da Comparação",
             font=FONTS['subtitle'],
             text_color=COLORS['primary']
         )
@@ -186,95 +186,6 @@ class RepetidosScreen(ctk.CTkFrame):
         )
         vazio.pack(expand=True)
     
-    def mostrar_comparacao(self, index):
-        """Mostra a comparação entre a OS repetida e a OS de referência"""
-        if index >= len(self.dados_repetidos):
-            return
-        
-        item = self.dados_repetidos[index]
-        
-        # Limpar frame de detalhes
-        for widget in self.detalhes_frame.winfo_children():
-            widget.destroy()
-        
-        # Título da comparação
-        title = ctk.CTkLabel(
-            self.detalhes_frame,
-            text=f"Comparação: OS {item['numero_bd_repetido']} → OS {item['numero_bd_referencia']}",
-            font=FONTS['subtitle'],
-            text_color=COLORS['primary']
-        )
-        title.pack(pady=10)
-        
-        # Frame para as duas colunas (lado a lado)
-        columns_frame = ctk.CTkFrame(self.detalhes_frame, fg_color="transparent")
-        columns_frame.pack(fill="both", expand=True, pady=10)
-        
-        # ==================== COLUNA ESQUERDA - REPETIDO (AMARELO) ====================
-        left_frame = ctk.CTkFrame(columns_frame, fg_color=COLORS['warning_bg'], corner_radius=10)
-        left_frame.pack(side="left", fill="both", expand=True, padx=(0, 5))
-        
-        left_title = ctk.CTkLabel(
-            left_frame,
-            text="🔄 OS REPETIDA",
-            font=FONTS['body_bold'],
-            text_color=COLORS['warning']
-        )
-        left_title.pack(pady=10)
-        
-        # Separador
-        sep_left = ctk.CTkFrame(left_frame, height=1, fg_color=COLORS['warning'])
-        sep_left.pack(fill="x", padx=10, pady=5)
-        
-        # Buscar dados completos da OS repetida
-        dados_completos_repetido = self.buscar_os_completa(item['numero_bd_repetido'])
-        
-        if dados_completos_repetido:
-            self.montar_detalhes_os(left_frame, dados_completos_repetido)
-        else:
-            # Fallback com dados básicos
-            dados_repetido = [
-                ("Nº BD:", item['numero_bd_repetido']),
-                ("Data:", item['data_repetido']),
-                ("WAN/Piloto:", item['wan_piloto']),
-                ("Cliente:", item['cliente']),
-                ("Causa Raiz:", item['causa_raiz_repetido'])
-            ]
-            for label, valor in dados_repetido:
-                self.adicionar_linha_detalhe(left_frame, label, valor)
-        
-        # ==================== COLUNA DIREITA - REFERÊNCIA (VERDE) ====================
-        right_frame = ctk.CTkFrame(columns_frame, fg_color=COLORS['success_bg'], corner_radius=10)
-        right_frame.pack(side="right", fill="both", expand=True, padx=(5, 0))
-        
-        right_title = ctk.CTkLabel(
-            right_frame,
-            text="📋 OS REFERÊNCIA",
-            font=FONTS['body_bold'],
-            text_color=COLORS['success']
-        )
-        right_title.pack(pady=10)
-        
-        # Separador
-        sep_right = ctk.CTkFrame(right_frame, height=1, fg_color=COLORS['success'])
-        sep_right.pack(fill="x", padx=10, pady=5)
-        
-        # Buscar dados completos da OS referência
-        dados_completos_ref = self.buscar_os_completa(item['numero_bd_referencia'])
-        
-        if dados_completos_ref:
-            self.montar_detalhes_os(right_frame, dados_completos_ref)
-        else:
-            # Fallback com dados básicos
-            dados_referencia = [
-                ("Nº BD:", item['numero_bd_referencia']),
-                ("Data:", item['data_referencia']),
-                ("Técnico:", item['tecnico_referencia']),
-                ("Causa Raiz:", item['causa_raiz_referencia'])
-            ]
-            for label, valor in dados_referencia:
-                self.adicionar_linha_detalhe(right_frame, label, valor)
-    
     def buscar_os_completa(self, numero_bd):
         """Busca todos os detalhes de uma OS pelo número BD"""
         os_controller = OrdemServicoController()
@@ -342,105 +253,191 @@ class RepetidosScreen(ctk.CTkFrame):
             'produto_designador': produto_info.designador if produto_info else "-",
             'produto_wan': produto_info.wan_piloto if produto_info else "-",
             'causa_raiz': os_encontrada.causa_raiz if os_encontrada.causa_raiz else "-",
-            'materiais': os_encontrada.materiais_utilizados if os_encontrada.materiais_utilizados else "-",
             'acao': os_encontrada.acao if os_encontrada.acao else "-",
             'contato': os_encontrada.contato_responsavel if os_encontrada.contato_responsavel else "-",
             'observacoes': os_encontrada.observacoes if os_encontrada.observacoes else "-"
         }
     
-    def montar_detalhes_os(self, parent, dados):
-        """Monta a exibição dos detalhes da OS"""
+    def mostrar_comparacao(self, index):
+        """Mostra a comparação entre a OS repetida e a OS de referência"""
+        if index >= len(self.dados_repetidos):
+            return
         
-        # Informações Gerais
-        secao = ctk.CTkLabel(
-            parent,
-            text="📋 Informações Gerais",
+        item = self.dados_repetidos[index]
+        
+        # Limpar frame de detalhes
+        for widget in self.detalhes_frame.winfo_children():
+            widget.destroy()
+        
+        # Buscar dados completos
+        dados_repetido = self.buscar_os_completa(item['numero_bd_repetido'])
+        dados_ref = self.buscar_os_completa(item['numero_bd_referencia'])
+        
+        # ==================== TOPO: CLIENTE, ENDEREÇO, PRODUTO ====================
+        top_frame = ctk.CTkFrame(self.detalhes_frame, fg_color=COLORS['bg_card'], corner_radius=10, border_width=1, border_color=COLORS['border'])
+        top_frame.pack(fill="x", pady=(0, 10))
+        
+        # Cliente
+        cliente_frame = ctk.CTkFrame(top_frame, fg_color="transparent")
+        cliente_frame.pack(fill="x", padx=15, pady=(10, 5))
+        
+        cliente_icon = ctk.CTkLabel(cliente_frame, text="🏢", font=("Inter", 14), text_color=COLORS['primary'])
+        cliente_icon.pack(side="left", padx=(0, 5))
+        
+        cliente_label = ctk.CTkLabel(
+            cliente_frame, 
+            text=f"CLIENTE: {dados_repetido['cliente'] if dados_repetido else item['cliente']}",
             font=FONTS['body_bold'],
             text_color=COLORS['text_primary']
         )
-        secao.pack(anchor="w", padx=10, pady=(10, 5))
+        cliente_label.pack(side="left")
         
-        gerais = [
-            ("Nº BD:", dados['numero_bd']),
-            ("Tipo:", dados['tipo']),
-            ("Status:", dados['status']),
-            ("Data Abertura:", dados['data_abertura']),
-            ("Data Conclusão:", dados['data_conclusao'])
-        ]
+        # Endereço
+        endereco_frame = ctk.CTkFrame(top_frame, fg_color="transparent")
+        endereco_frame.pack(fill="x", padx=15, pady=5)
         
-        for label, valor in gerais:
-            self.adicionar_linha_detalhe(parent, label, valor)
+        endereco_icon = ctk.CTkLabel(endereco_frame, text="📍", font=("Inter", 14), text_color=COLORS['primary'])
+        endereco_icon.pack(side="left", padx=(0, 5))
         
-        # Responsáveis
-        secao = ctk.CTkLabel(
-            parent,
-            text="👥 Responsáveis",
-            font=FONTS['body_bold'],
-            text_color=COLORS['text_primary']
+        endereco_texto = dados_repetido['endereco'] if dados_repetido and dados_repetido['endereco'] != "-" else "Endereço não informado"
+        endereco_label = ctk.CTkLabel(
+            endereco_frame,
+            text=f"ENDEREÇO: {endereco_texto}",
+            font=FONTS['body'],
+            text_color=COLORS['text_secondary']
         )
-        secao.pack(anchor="w", padx=10, pady=(10, 5))
-        
-        self.adicionar_linha_detalhe(parent, "Técnico:", dados['tecnico'])
-        self.adicionar_linha_detalhe(parent, "Cliente:", dados['cliente'])
-        if dados['endereco'] != "-":
-            self.adicionar_linha_detalhe(parent, "Endereço:", dados['endereco'])
+        endereco_label.pack(side="left")
         
         # Produto
-        secao = ctk.CTkLabel(
-            parent,
-            text="📦 Produto",
-            font=FONTS['body_bold'],
-            text_color=COLORS['text_primary']
+        produto_frame = ctk.CTkFrame(top_frame, fg_color="transparent")
+        produto_frame.pack(fill="x", padx=15, pady=5)
+        
+        produto_icon = ctk.CTkLabel(produto_frame, text="📦", font=("Inter", 14), text_color=COLORS['primary'])
+        produto_icon.pack(side="left", padx=(0, 5))
+        
+        if dados_repetido:
+            produto_texto = f"PRODUTO: {dados_repetido['produto_desc']} ({dados_repetido['produto_designador']}) - WAN: {dados_repetido['produto_wan']}"
+        else:
+            produto_texto = f"PRODUTO: {item['wan_piloto']}"
+        
+        produto_label = ctk.CTkLabel(
+            produto_frame,
+            text=produto_texto,
+            font=FONTS['body'],
+            text_color=COLORS['text_secondary']
         )
-        secao.pack(anchor="w", padx=10, pady=(10, 5))
+        produto_label.pack(side="left")
         
-        produto = [
-            ("Descrição:", dados['produto_desc']),
-            ("Designador:", dados['produto_designador']),
-            ("WAN/Piloto:", dados['produto_wan'])
-        ]
+        # Separador
+        sep = ctk.CTkFrame(self.detalhes_frame, height=1, fg_color=COLORS['border'])
+        sep.pack(fill="x", pady=10)
         
-        for label, valor in produto:
-            self.adicionar_linha_detalhe(parent, label, valor)
+        # ==================== CARDS LADO A LADO ====================
+        columns_frame = ctk.CTkFrame(self.detalhes_frame, fg_color="transparent")
+        columns_frame.pack(fill="both", expand=True, pady=5)
         
-        # Informações da OS
-        secao = ctk.CTkLabel(
-            parent,
-            text="📝 Informações da OS",
+        columns_frame.grid_columnconfigure(0, weight=1)
+        columns_frame.grid_columnconfigure(1, weight=1)
+        
+        # ==================== CARD ESQUERDO - REPETIDO (AMARELO) ====================
+        left_frame = ctk.CTkFrame(columns_frame, fg_color=COLORS['warning_bg'], corner_radius=10)
+        left_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
+        
+        left_title = ctk.CTkLabel(
+            left_frame,
+            text=f"🟡 OS REPETIDA\n{item['numero_bd_repetido']}",
             font=FONTS['body_bold'],
-            text_color=COLORS['text_primary']
+            text_color=COLORS['warning']
         )
-        secao.pack(anchor="w", padx=10, pady=(10, 5))
+        left_title.pack(pady=10)
         
-        info_os = [
-            ("Causa Raiz:", dados['causa_raiz']),
-            ("Materiais:", dados['materiais']),
-            ("Ação:", dados['acao']),
-            ("Contato:", dados['contato'])
-        ]
+        sep_left = ctk.CTkFrame(left_frame, height=1, fg_color=COLORS['warning'])
+        sep_left.pack(fill="x", padx=10, pady=5)
         
-        for label, valor in info_os:
-            self.adicionar_linha_detalhe(parent, label, valor)
+        left_scroll = ctk.CTkScrollableFrame(left_frame, fg_color="transparent")
+        left_scroll.pack(fill="both", expand=True, padx=10, pady=10)
         
-        # Observações (se houver)
-        if dados['observacoes'] and dados['observacoes'] != "-":
-            self.adicionar_linha_detalhe(parent, "Observações:", dados['observacoes'][:200] + ("..." if len(dados['observacoes']) > 200 else ""))
+        # Causa Raiz
+        self.adicionar_secao_detalhe(left_scroll, "⚠️ CAUSA RAIZ", "warning")
+        causa_repetido = dados_repetido['causa_raiz'] if dados_repetido else item['causa_raiz_repetido']
+        self.adicionar_linha_detalhe(left_scroll, causa_repetido, "warning")
+        
+        # Observações
+        self.adicionar_secao_detalhe(left_scroll, "📝 OBSERVAÇÕES", "warning")
+        obs_repetido = dados_repetido['observacoes'][:200] + ("..." if len(dados_repetido['observacoes']) > 200 else "") if dados_repetido and dados_repetido['observacoes'] else "-"
+        self.adicionar_linha_detalhe(left_scroll, obs_repetido, "warning")
+        
+        # Ação Realizada
+        self.adicionar_secao_detalhe(left_scroll, "🔧 AÇÃO REALIZADA", "warning")
+        acao_repetido = dados_repetido['acao'] if dados_repetido else "-"
+        self.adicionar_linha_detalhe(left_scroll, acao_repetido, "warning")
+        
+        # Contato Responsável
+        self.adicionar_secao_detalhe(left_scroll, "📞 CONTATO RESPONSÁVEL", "warning")
+        contato_repetido = dados_repetido['contato'] if dados_repetido else "-"
+        self.adicionar_linha_detalhe(left_scroll, contato_repetido, "warning")
+        
+        # ==================== CARD DIREITO - REFERÊNCIA (VERDE) ====================
+        right_frame = ctk.CTkFrame(columns_frame, fg_color=COLORS['success_bg'], corner_radius=10)
+        right_frame.grid(row=0, column=1, sticky="nsew", padx=(5, 0))
+        
+        right_title = ctk.CTkLabel(
+            right_frame,
+            text=f"🟢 OS REFERÊNCIA\n{item['numero_bd_referencia']}",
+            font=FONTS['body_bold'],
+            text_color=COLORS['success']
+        )
+        right_title.pack(pady=10)
+        
+        sep_right = ctk.CTkFrame(right_frame, height=1, fg_color=COLORS['success'])
+        sep_right.pack(fill="x", padx=10, pady=5)
+        
+        right_scroll = ctk.CTkScrollableFrame(right_frame, fg_color="transparent")
+        right_scroll.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Causa Raiz
+        self.adicionar_secao_detalhe(right_scroll, "⚠️ CAUSA RAIZ", "success")
+        causa_ref = dados_ref['causa_raiz'] if dados_ref else item['causa_raiz_referencia']
+        self.adicionar_linha_detalhe(right_scroll, causa_ref, "success")
+        
+        # Observações
+        self.adicionar_secao_detalhe(right_scroll, "📝 OBSERVAÇÕES", "success")
+        obs_ref = dados_ref['observacoes'][:200] + ("..." if len(dados_ref['observacoes']) > 200 else "") if dados_ref and dados_ref['observacoes'] else "-"
+        self.adicionar_linha_detalhe(right_scroll, obs_ref, "success")
+        
+        # Ação Realizada
+        self.adicionar_secao_detalhe(right_scroll, "🔧 AÇÃO REALIZADA", "success")
+        acao_ref = dados_ref['acao'] if dados_ref else "-"
+        self.adicionar_linha_detalhe(right_scroll, acao_ref, "success")
+        
+        # Contato Responsável
+        self.adicionar_secao_detalhe(right_scroll, "📞 CONTATO RESPONSÁVEL", "success")
+        contato_ref = dados_ref['contato'] if dados_ref else "-"
+        self.adicionar_linha_detalhe(right_scroll, contato_ref, "success")
     
-    def adicionar_linha_detalhe(self, parent, label, valor):
-        """Adiciona uma linha de detalhe formatada"""
-        frame = ctk.CTkFrame(parent, fg_color="transparent")
-        frame.pack(fill="x", padx=10, pady=3)
-        
-        lbl_label = ctk.CTkLabel(
-            frame,
-            text=label,
+    def adicionar_secao_detalhe(self, parent, titulo, cor_tipo):
+        """Adiciona um título de seção nos cards de detalhe"""
+        cor = COLORS['warning'] if cor_tipo == "warning" else COLORS['success']
+        lbl = ctk.CTkLabel(
+            parent,
+            text=titulo,
             font=FONTS['body_bold'],
-            text_color=COLORS['text_secondary'],
-            width=100,
-            anchor="w"
+            text_color=cor
         )
-        lbl_label.pack(side="left")
+        lbl.pack(anchor="w", pady=(10, 5))
+    
+    def adicionar_linha_detalhe(self, parent, valor, cor_tipo):
+        """Adiciona uma linha de detalhe formatada"""
+        cor = COLORS['warning'] if cor_tipo == "warning" else COLORS['success']
         
+        frame = ctk.CTkFrame(parent, fg_color="transparent")
+        frame.pack(fill="x", pady=3)
+        
+        # Ponto colorido
+        ponto = ctk.CTkLabel(frame, text="•", font=("Inter", 12, "bold"), text_color=cor, width=20, anchor="w")
+        ponto.pack(side="left")
+        
+        # Valor
         lbl_valor = ctk.CTkLabel(
             frame,
             text=valor,
@@ -450,4 +447,4 @@ class RepetidosScreen(ctk.CTkFrame):
             wraplength=280,
             justify="left"
         )
-        lbl_valor.pack(side="left", padx=(10, 0), fill="x", expand=True)
+        lbl_valor.pack(side="left", padx=(0, 10), fill="x", expand=True)

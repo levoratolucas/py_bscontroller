@@ -4,6 +4,7 @@ import customtkinter as ctk
 from app.frontend.styles import COLORS, setup_theme
 from app.frontend.components import Sidebar, TopBar
 from app.frontend.screens import DashboardScreen, RelatoriosScreen
+from app.frontend.screens.nova_os import NovaOsScreen
 
 
 class MainWindow(ctk.CTk):
@@ -60,6 +61,8 @@ class MainWindow(ctk.CTk):
             self.current_screen = DashboardScreen(self.content_frame, self.navigate_to)
         elif page == "relatorios":
             self.current_screen = RelatoriosScreen(self.content_frame)
+        elif page == "nova_os":
+            self.current_screen = NovaOsScreen(self.content_frame, self)
         else:
             # Placeholder para outras telas
             self.current_screen = ctk.CTkFrame(self.content_frame, fg_color=COLORS['bg_main'])
