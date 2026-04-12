@@ -1,28 +1,22 @@
 from datetime import datetime
 
 class OrdemServico:
-    def __init__(self, id_tecnico, id_produto, causa_raiz, materiais_utilizados, 
-                 acao, contato_responsavel, observacoes, number_bd=None, tipo=None,
-                 data_criacao=None, concluida=False, data_conclusao=None, id_os=None):
+    def __init__(self, numero, id_tecnico, wan_piloto=None, carimbo=None, 
+                 tipo=2, status=1, data_criacao=None, data=None, 
+                 inicio_execucao=None, fim_execucao=None, id_os=None):
         self.id_os = id_os
+        self.numero = numero
         self.id_tecnico = id_tecnico
-        self.id_produto = id_produto
-        self.causa_raiz = causa_raiz
-        self.number_bd = number_bd
+        self.wan_piloto = wan_piloto
+        self.carimbo = carimbo
         self.tipo = tipo
-        self.materiais_utilizados = materiais_utilizados
-        self.acao = acao
-        self.contato_responsavel = contato_responsavel
-        self.observacoes = observacoes
+        self.status = status
         self.data_criacao = data_criacao if data_criacao else datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.concluida = concluida
-        self.data_conclusao = data_conclusao
-    
-    def concluir(self):
-        """Método para concluir a OS com data/hora atual"""
-        self.concluida = True
-        self.data_conclusao = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.data = data
+        self.inicio_execucao = inicio_execucao
+        self.fim_execucao = fim_execucao
     
     def __str__(self):
-        status = "CONCLUÍDA" if self.concluida else "EM ANDAMENTO"
-        return f"OS {self.id_os} - {status} - Abertura: {self.data_criacao}"
+        status_texto = "Concluído" if self.status == 1 else "Suspenso"
+        tipo_texto = {1: "Apoio", 2: "Reparo", 3: "Ativação"}.get(self.tipo, "Reparo")
+        return f"OS {self.numero} - {tipo_texto} - {status_texto}"

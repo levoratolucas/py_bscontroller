@@ -1,8 +1,10 @@
 import sqlite3
+import os
 
 class Conexao:
-    def __init__(self, db_name="banco2.db"):
-        self.db_name = db_name
-
+    def __init__(self, banco='sistema.db'):
+        # Garantir que o banco seja criado na raiz do projeto
+        self.banco = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), banco)
+    
     def conectar(self):
-        return sqlite3.connect(self.db_name)
+        return sqlite3.connect(self.banco)

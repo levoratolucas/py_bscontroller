@@ -1,0 +1,21 @@
+numero;tecnico_nome;tecnico_matricula;wan_piloto;carimbo;tipo;status
+7001;JONATHAN E LUCIANO;123456;187.50.117.1;Ativação de novo cliente - Instalação OK;3;1
+7002;ANDER SILVA;123457;187.50.117.2;Reparo de roteador - Substituído;2;1
+7003;PEDRO COSTA;123458;187.50.117.3;Manutenção preventiva - Limpeza;2;1
+7004;LUCAS SANTOS;123459;187.50.117.4;Apoio técnico - Cliente orientado;1;1
+7005;JONATHAN E LUCIANO;123456;187.50.117.5;Ativação de link - Configurado;3;1
+7006;ANDER SILVA;123457;187.50.117.6;Reparo de fibra - Emenda;2;1
+7007;PEDRO COSTA;123458;187.50.117.7;Troca de ONU - Equipamento novo;2;1
+7008;LUCAS SANTOS;123459;187.50.117.8;Apoio remoto - Dúvidas;1;1
+7009;JONATHAN E LUCIANO;123456;187.50.117.9;Ativação de rede - Testes OK;3;1
+7010;ANDER SILVA;123457;187.50.117.10;Reparo de switch - Porta queimada;2;1
+7011;PEDRO COSTA;123458;187.50.117.11;Manutenção corretiva - Fonte trocada;2;1
+7012;LUCAS SANTOS;123459;187.50.117.12;Apoio ao cliente - Retorno;1;1
+7013;JONATHAN E LUCIANO;123456;187.50.117.9;Ativação de VoIP - Configurado;3;1
+7014;ANDER SILVA;123457;187.50.117.9;Reparo de cabo - Conector substituído;2;1
+7015;PEDRO COSTA;123458;187.50.117.9;Troca de roteador - Equipamento novo;2;1
+7016;LUCAS SANTOS;123459;187.50.117.9;Apoio técnico - Visita realizada;1;1
+7017;JONATHAN E LUCIANO;123456;187.50.117.16;Ativação de backup - Configurado;3;1
+7018;ANDER SILVA;123457;187.50.117.17;Reparo de fonte - Substituída;2;1
+7019;PEDRO COSTA;123458;187.50.117.18;Manutenção preventiva - OK;2;1
+7020;LUCAS SANTOS;123459;187.50.117.19;Apoio ao cliente - Satisfeito;1;1
