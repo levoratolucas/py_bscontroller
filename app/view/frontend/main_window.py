@@ -95,11 +95,11 @@ class MainWindow:
             self.current_screen = RelatoriosScreen(self.content_frame, self)
         elif nome_tela == "repetidos":  # <-- ADICIONAR AQUI
             self.current_screen = RepetidosScreen(self.content_frame, self)
-        elif nome_tela == "admin2":
+        elif nome_tela == "admin":
             self.current_screen = QueryTesterScreen(self.content_frame, self)
             return
         
-        elif nome_tela == "admin":
+        elif nome_tela == "admin2":
             self.current_screen = AdminScreen(self.content_frame, self)  # <-- NOVA TELA
             # NÃO TEM RETURN AQUI
         

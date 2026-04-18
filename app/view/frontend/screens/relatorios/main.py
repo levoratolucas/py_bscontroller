@@ -4,7 +4,9 @@ from datetime import datetime, timedelta
 from app.view.frontend.styles import COLORS, FONTS
 from app.controller.relatorio_controller import RelatorioController
 from app.controller.ordem_servico_controller import OrdemServicoController
+from app.controller.repetido_controller import RepetidoController
 from app.view.frontend.screens.relatorios.exportar import ExportadorRelatorio
+from app.view.frontend.screens.relatorios.popup_analise import PopupAnalise
 
 
 class RelatoriosScreen(ctk.CTkFrame):
@@ -15,6 +17,7 @@ class RelatoriosScreen(ctk.CTkFrame):
         self.app = app
         self.relatorio_controller = RelatorioController()
         self.os_controller = OrdemServicoController()
+        self.repetido_controller = RepetidoController()
         self.dados_atuais = []
         self.modo = "mes"
         self.periodos_producao = []
@@ -44,7 +47,7 @@ class RelatoriosScreen(ctk.CTkFrame):
         
         ctk.CTkLabel(
             titulo_frame,
-            text="Análise de WANs repetidos e ofensores",
+            text="Análise de WANs repetidos e ofensores | Duplo clique para analisar",
             font=('Arial', 12),
             text_color="#666666"
         ).pack(anchor="w")
@@ -81,31 +84,31 @@ class RelatoriosScreen(ctk.CTkFrame):
         self.card_repetido_valor = ctk.CTkLabel(card1, text="0", font=('Arial', 32, 'bold'), text_color="#ff6b00")
         self.card_repetido_valor.pack(pady=(5, 15))
         
-        # Card 2 - TOTAL OS (azul)
-        card2 = ctk.CTkFrame(cards_frame, fg_color="#1a1a2e", corner_radius=12, border_width=1, border_color="#0088ff")
+        # Card 2 - PROCEDE (verde)
+        card2 = ctk.CTkFrame(cards_frame, fg_color="#1a1a2e", corner_radius=12, border_width=1, border_color="#00cc66")
         card2.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
         
-        ctk.CTkLabel(card2, text="📋", font=('Arial', 40), text_color="#0088ff").pack(pady=(15, 5))
-        ctk.CTkLabel(card2, text="TOTAL OS", font=('Arial', 16, 'bold'), text_color="#ffffff").pack()
-        self.card_total_valor = ctk.CTkLabel(card2, text="0", font=('Arial', 32, 'bold'), text_color="#0088ff")
-        self.card_total_valor.pack(pady=(5, 15))
+        ctk.CTkLabel(card2, text="✅", font=('Arial', 40), text_color="#00cc66").pack(pady=(15, 5))
+        ctk.CTkLabel(card2, text="PROCEDE", font=('Arial', 16, 'bold'), text_color="#ffffff").pack()
+        self.card_procede_valor = ctk.CTkLabel(card2, text="0", font=('Arial', 32, 'bold'), text_color="#00cc66")
+        self.card_procede_valor.pack(pady=(5, 15))
         
-        # Card 3 - OFENSOR % (vermelho)
+        # Card 3 - IMPROCEDENTE (vermelho)
         card3 = ctk.CTkFrame(cards_frame, fg_color="#1a1a2e", corner_radius=12, border_width=1, border_color="#ff3333")
         card3.grid(row=0, column=2, sticky="nsew", padx=5, pady=5)
         
-        ctk.CTkLabel(card3, text="⚠️", font=('Arial', 40), text_color="#ff3333").pack(pady=(15, 5))
-        ctk.CTkLabel(card3, text="OFENSOR %", font=('Arial', 16, 'bold'), text_color="#ffffff").pack()
-        self.card_ofensor_valor = ctk.CTkLabel(card3, text="0%", font=('Arial', 32, 'bold'), text_color="#ff3333")
-        self.card_ofensor_valor.pack(pady=(5, 15))
+        ctk.CTkLabel(card3, text="❌", font=('Arial', 40), text_color="#ff3333").pack(pady=(15, 5))
+        ctk.CTkLabel(card3, text="IMPROCEDENTE", font=('Arial', 16, 'bold'), text_color="#ffffff").pack()
+        self.card_imprcedente_valor = ctk.CTkLabel(card3, text="0", font=('Arial', 32, 'bold'), text_color="#ff3333")
+        self.card_imprcedente_valor.pack(pady=(5, 15))
         
-        # Card 4 - TÉCNICOS (verde)
-        card4 = ctk.CTkFrame(cards_frame, fg_color="#1a1a2e", corner_radius=12, border_width=1, border_color="#00cc66")
+        # Card 4 - TÉCNICOS (azul)
+        card4 = ctk.CTkFrame(cards_frame, fg_color="#1a1a2e", corner_radius=12, border_width=1, border_color="#0088ff")
         card4.grid(row=0, column=3, sticky="nsew", padx=5, pady=5)
         
-        ctk.CTkLabel(card4, text="👤", font=('Arial', 40), text_color="#00cc66").pack(pady=(15, 5))
+        ctk.CTkLabel(card4, text="👤", font=('Arial', 40), text_color="#0088ff").pack(pady=(15, 5))
         ctk.CTkLabel(card4, text="TÉCNICOS", font=('Arial', 16, 'bold'), text_color="#ffffff").pack()
-        self.card_tecnicos_valor = ctk.CTkLabel(card4, text="0", font=('Arial', 32, 'bold'), text_color="#00cc66")
+        self.card_tecnicos_valor = ctk.CTkLabel(card4, text="0", font=('Arial', 32, 'bold'), text_color="#0088ff")
         self.card_tecnicos_valor.pack(pady=(5, 15))
 
         # ================= FILTROS =================
@@ -188,7 +191,7 @@ class RelatoriosScreen(ctk.CTkFrame):
         
         ctk.CTkLabel(
             table_wrapper,
-            text="📋 Histórico de Repetições",
+            text="📋 Histórico de Repetições (Duplo clique para analisar)",
             font=('Arial', 12, 'bold'),
             text_color="#00ff88"
         ).pack(anchor="w", padx=15, pady=(10, 5))
@@ -238,8 +241,9 @@ class RelatoriosScreen(ctk.CTkFrame):
         scrollbar.pack(side="right", fill="y")
         self.tree.configure(yscrollcommand=scrollbar.set)
         
-        # Bind clique na tabela
+        # Binds da tabela
         self.tree.bind("<<TreeviewSelect>>", self.on_linha_selecionada)
+        self.tree.bind("<Double-1>", self.abrir_popup_analise)
         
         # ================= ÁREA DOS CARIMBOS (70%) =================
         carimbos_wrapper = ctk.CTkFrame(main_container, fg_color="#0f0f0f", corner_radius=12, border_width=1, border_color="#2a2a2a")
@@ -361,22 +365,43 @@ class RelatoriosScreen(ctk.CTkFrame):
         if data_inicio is None or data_fim is None:
             data_inicio, data_fim = self.obter_periodo()
         
-        resumo = self.relatorio_controller.get_resumo_periodo(data_inicio, data_fim)
+        # Usar a nova função do RepetidoController para estatísticas completas
+        estatisticas = self.repetido_controller.get_estatisticas_completas_periodo(
+            data_inicio, data_fim, id_tecnico
+        )
         
-        self.card_repetido_valor.configure(text=str(resumo['repeticoes']))
-        self.card_total_valor.configure(text=str(resumo['total_os']))
-        self.card_ofensor_valor.configure(text=f"{resumo['ofensor']}%")
+        # Atualizar cards
+        self.card_repetido_valor.configure(text=str(estatisticas['total_repetidos']))
+        self.card_procede_valor.configure(text=str(estatisticas['procedentes']))
+        self.card_imprcedente_valor.configure(text=str(estatisticas['nao_procedentes']))
         
+        # Total de técnicos (ainda do relatorio_controller)
         tecnicos = self.relatorio_controller.get_tecnicos()
-        self.card_tecnicos_valor.configure(text=str(len(tecnicos)))
+        if id_tecnico:
+            # Se tem filtro, mostra 1 técnico
+            self.card_tecnicos_valor.configure(text="1")
+        else:
+            self.card_tecnicos_valor.configure(text=str(len(tecnicos)))
         
+        # Buscar OS repetidas (que ainda NÃO foram analisadas - pendentes)
         self.dados_atuais = self.relatorio_controller.get_os_repetidas_apenas(data_inicio, data_fim, id_tecnico)
         
+        # Filtrar OS que já foram analisadas (remover da lista)
+        ids_analisados = self.repetido_controller.get_ids_os_analisados()
+        self.dados_atuais = [os for os in self.dados_atuais if os.get('id_os') not in ids_analisados]
+        
+        # Limpar treeview
         for item in self.tree.get_children():
             self.tree.delete(item)
         
+        # Preencher treeview
         for i, item in enumerate(self.dados_atuais):
             tag = 'even' if i % 2 == 0 else 'odd'
+            
+            # Mapear status de procedência para observação
+            status_map = {0: "⏳ Pendente", 1: "✅ Procede", 2: "❌ Não Procede"}
+            observacao = status_map.get(item.get('procedente', 0), "Pendente")
+            
             self.tree.insert("", "end", values=(
                 item.get('numero', '-'),
                 item.get('wan_piloto', '-'),
@@ -385,7 +410,7 @@ class RelatoriosScreen(ctk.CTkFrame):
                 item.get('inicio_execucao', '-'),
                 item.get('fim_execucao', '-'),
                 item.get('status_nome', '-'),
-                item.get('observacao', '-')
+                observacao
             ), tags=(tag,), iid=str(i))
         
         self.tree.tag_configure('even', background='#0f0f0f')
@@ -465,6 +490,73 @@ class RelatoriosScreen(ctk.CTkFrame):
         self.texto_referencia.delete("1.0", "end")
         
         self.after(2000, lambda: self.tecnico_combo.configure(border_color="#2a2a2a"))
+
+    # ================= POPUP DE ANÁLISE =================
+    
+    def abrir_popup_analise(self, event=None):
+        """Abre popup para análise do repetido (duplo clique)"""
+        selection = self.tree.selection()
+        if not selection:
+            messagebox.showwarning("Aviso", "Selecione um repetido para analisar!")
+            return
+        
+        item_id = selection[0]
+        valores = self.tree.item(item_id, 'values')
+        
+        if not valores:
+            return
+        
+        # Buscar a OS selecionada
+        os_selecionada = None
+        for os in self.dados_atuais:
+            if str(os.get('numero')) == str(valores[0]):
+                os_selecionada = os
+                break
+        
+        if not os_selecionada:
+            messagebox.showerror("Erro", "OS não encontrada!")
+            return
+        
+        # Verificar se tem id_os
+        if not os_selecionada.get('id_os'):
+            messagebox.showerror("Erro", "ID da OS não encontrado!")
+            return
+        
+        # Buscar a OS de referência
+        data_inicio, data_fim = self.obter_periodo()
+        wan = os_selecionada.get('wan_piloto')
+        
+        os_referencia = self.relatorio_controller.get_os_anterior(
+            wan, 
+            os_selecionada.get('data'), 
+            os_selecionada.get('inicio_execucao', '00:00'),
+            data_inicio, 
+            data_fim
+        )
+        
+        if not os_referencia:
+            messagebox.showerror("Erro", "Não foi possível encontrar a OS de referência!")
+            return
+        
+        # Verificar se tem id_os_referencia
+        if not os_referencia.get('id_os'):
+            messagebox.showerror("Erro", "ID da OS referência não encontrado!")
+            return
+        
+        # Obter o mês de referência baseado no período selecionado no filtro
+        mes_referencia = datetime.strptime(data_inicio, "%Y-%m-%d").strftime("%Y-%m")
+        
+        # Abrir popup
+        PopupAnalise(
+            parent=self,
+            dados_os={
+                'os_selecionada': os_selecionada,
+                'os_referencia': os_referencia
+            },
+            repetido_controller=self.repetido_controller,
+            callback_atualizar=self.aplicar_filtro,
+            mes_referencia=mes_referencia
+        )
 
     # ================= JANELA DE RELATÓRIO =================
     
@@ -632,7 +724,6 @@ class RelatoriosScreen(ctk.CTkFrame):
 
     def exportar_relatorio(self, dialog, tipo):
         """Exporta o relatório conforme o tipo selecionado"""
-        # Obter dados do período
         if self.periodo_rel_tipo == 'mes':
             mes = self.rel_mes_combo.get()
             ano = self.rel_ano_combo.get()
@@ -644,7 +735,6 @@ class RelatoriosScreen(ctk.CTkFrame):
         
         tecnico_nome = self.rel_tecnico_combo.get()
         
-        # Usar o exportador
         exportador = ExportadorRelatorio(self, self.relatorio_controller, self.os_controller)
         exportador.carregar_periodos_producao()
         

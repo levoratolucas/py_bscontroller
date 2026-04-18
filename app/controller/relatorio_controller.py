@@ -94,6 +94,7 @@ class RelatorioController:
         # Buscar TODAS as OS com WAN (sem filtro de data para a anterior)
         query = """
             SELECT 
+                o.id_os,
                 o.wan_piloto, 
                 o.data, 
                 o.inicio_execucao,
@@ -120,18 +121,19 @@ class RelatorioController:
         # Agrupar por WAN
         wans_dict = {}
         for row in dados:
-            wan = row[0]
+            wan = row[1]
             if wan not in wans_dict:
                 wans_dict[wan] = []
             
-            data_str = row[1]
-            hora_str = row[2] if row[2] else "00:00"
+            data_str = row[2]
+            hora_str = row[3] if row[3] else "00:00"
             datetime_str = f"{data_str} {hora_str}:00"
             
             wans_dict[wan].append({
+                'id_os': row[0],
                 'datetime': datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S"),
                 'data': data_str,
-                'id_tecnico': row[3]
+                'id_tecnico': row[4]
             })
         
         # Converter período para datetime
@@ -184,6 +186,7 @@ class RelatorioController:
         # Buscar todas OS para calcular repetições
         query_os = """
             SELECT 
+                o.id_os,
                 o.numero,
                 o.id_tecnico,
                 t.nome as tecnico,
@@ -212,18 +215,19 @@ class RelatorioController:
         # Agrupar por WAN
         wans_dict = {}
         for row in todas_os:
-            wan = row[3]
+            wan = row[4]
             if wan not in wans_dict:
                 wans_dict[wan] = []
             
-            data_str = row[4]
-            hora_str = row[5] if row[5] else "00:00"
+            data_str = row[5]
+            hora_str = row[6] if row[6] else "00:00"
             datetime_str = f"{data_str} {hora_str}:00"
             
             wans_dict[wan].append({
-                'numero': row[0],
-                'id_tecnico': row[1],
-                'tecnico': row[2],
+                'id_os': row[0],
+                'numero': row[1],
+                'id_tecnico': row[2],
+                'tecnico': row[3],
                 'wan': wan,
                 'data': data_str,
                 'datetime': datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
@@ -250,7 +254,7 @@ class RelatorioController:
                     data_anterior = registros[j]['datetime']
                     dias_diferenca = (data_atual - data_anterior).days
                     if dias_diferenca <= 30:
-                        os_repetidas.add(registros[i]['numero'])
+                        os_repetidas.add(registros[i]['id_os'])
                         break
         
         # Buscar estatísticas por técnico
@@ -258,7 +262,7 @@ class RelatorioController:
             SELECT 
                 t.id,
                 t.nome as tecnico,
-                COUNT(o.numero) as total_os,
+                COUNT(o.id_os) as total_os,
                 SUM(CASE WHEN o.status = 1 THEN 1 ELSE 0 END) as concluidos,
                 ROUND(AVG(CASE 
                     WHEN o.tipo = 2 AND o.status = 1 AND o.inicio_execucao IS NOT NULL AND o.fim_execucao IS NOT NULL
@@ -281,7 +285,7 @@ class RelatorioController:
             query_stats += " AND o.id_tecnico = ?"
             params_stats.append(id_tecnico)
         
-        query_stats += " GROUP BY t.id, t.nome HAVING COUNT(o.numero) > 0 ORDER BY t.nome"
+        query_stats += " GROUP BY t.id, t.nome HAVING COUNT(o.id_os) > 0 ORDER BY t.nome"
         
         c.execute(query_stats, params_stats)
         dados = c.fetchall()
@@ -290,7 +294,7 @@ class RelatorioController:
         repeticoes_por_tecnico = {}
         for os in todas_os:
             if os[0] in os_repetidas:
-                id_tec = os[1]
+                id_tec = os[2]
                 if id_tec:
                     repeticoes_por_tecnico[id_tec] = repeticoes_por_tecnico.get(id_tec, 0) + 1
         
@@ -330,9 +334,9 @@ class RelatorioController:
                     id_tecnico = None
         
         # Buscar TODAS as OS com a mesma WAN (sem filtro de data)
-        # Para conseguir encontrar a anterior mesmo que fora do período
         query = """
             SELECT 
+                o.id_os,
                 o.numero,
                 o.wan_piloto,
                 t.nome as tecnico,
@@ -370,26 +374,26 @@ class RelatorioController:
         # Agrupar por WAN
         wans_dict = {}
         for row in todas_os_wan:
-            wan = row[1]
+            wan = row[2]
             if wan not in wans_dict:
                 wans_dict[wan] = []
             
-            # Usar o campo 'data' (YYYY-MM-DD) + inicio_execucao
-            data_str = row[3]
-            hora_str = row[4] if row[4] else "00:00"
+            data_str = row[4]
+            hora_str = row[5] if row[5] else "00:00"
             datetime_str = f"{data_str} {hora_str}:00"
             
             wans_dict[wan].append({
-                'numero': row[0],
+                'id_os': row[0],
+                'numero': row[1],
                 'wan_piloto': wan,
-                'tecnico': row[2] if row[2] else '-',
-                'data': row[3],
-                'inicio_execucao': row[4] if row[4] else '-',
-                'fim_execucao': row[5] if row[5] else '-',
-                'status': row[6],
-                'status_nome': 'Concluído' if row[6] == 1 else 'Suspenso',
-                'carimbo': row[7] if row[7] else '',
-                'id_tecnico': row[8],
+                'tecnico': row[3] if row[3] else '-',
+                'data': row[4],
+                'inicio_execucao': row[5] if row[5] else '-',
+                'fim_execucao': row[6] if row[6] else '-',
+                'status': row[7],
+                'status_nome': 'Concluído' if row[7] == 1 else 'Suspenso',
+                'carimbo': row[8] if row[8] else '',
+                'id_tecnico': row[9],
                 'datetime': datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
             })
         
@@ -421,6 +425,7 @@ class RelatorioController:
                     
                     if dias_diferenca <= 30:
                         resultado.append({
+                            'id_os': registros[i]['id_os'],
                             'numero': registros[i]['numero'],
                             'wan_piloto': registros[i]['wan_piloto'],
                             'tecnico': registros[i]['tecnico'],
@@ -446,9 +451,9 @@ class RelatorioController:
         
         datetime_atual = datetime.strptime(f"{data_atual} {hora_atual}:00", "%Y-%m-%d %H:%M:%S")
         
-        # Buscar TODAS as OS anteriores (sem filtro de data)
         query = """
             SELECT 
+                o.id_os,
                 o.numero,
                 o.wan_piloto,
                 t.nome as tecnico,
@@ -474,24 +479,25 @@ class RelatorioController:
         rows = c.fetchall()
         conn.close()
         
-        # Procurar a OS anterior mais próxima (pode estar fora do período)
+        # Procurar a OS anterior mais próxima
         os_anterior = None
         data_mais_proxima = None
         
         for row in rows:
-            datetime_registro = datetime.strptime(row[8], "%Y-%m-%d %H:%M:%S")
+            datetime_registro = datetime.strptime(row[9], "%Y-%m-%d %H:%M:%S")
             if datetime_registro < datetime_atual:
                 if data_mais_proxima is None or datetime_registro > data_mais_proxima:
                     data_mais_proxima = datetime_registro
                     os_anterior = {
-                        'numero': row[0],
-                        'wan_piloto': row[1],
-                        'tecnico': row[2] if row[2] else '-',
-                        'data': row[3],
-                        'inicio_execucao': row[4] if row[4] else '-',
-                        'fim_execucao': row[5] if row[5] else '-',
-                        'status_nome': 'Concluído' if row[6] == 1 else 'Suspenso',
-                        'carimbo': row[7] if row[7] else ''
+                        'id_os': row[0],
+                        'numero': row[1],
+                        'wan_piloto': row[2],
+                        'tecnico': row[3] if row[3] else '-',
+                        'data': row[4],
+                        'inicio_execucao': row[5] if row[5] else '-',
+                        'fim_execucao': row[6] if row[6] else '-',
+                        'status_nome': 'Concluído' if row[7] == 1 else 'Suspenso',
+                        'carimbo': row[8] if row[8] else ''
                     }
         
         return os_anterior
@@ -545,8 +551,8 @@ class RelatorioController:
             SELECT 
                 t.nome as tecnico,
                 COUNT(DISTINCT o.data) as dias_trabalhados,
-                COUNT(o.numero) as total_concluidos,
-                ROUND(COUNT(o.numero) * 1.0 / COUNT(DISTINCT o.data), 2) as apu
+                COUNT(o.id_os) as total_concluidos,
+                ROUND(COUNT(o.id_os) * 1.0 / COUNT(DISTINCT o.data), 2) as apu
             FROM ordem_servico o
             LEFT JOIN tecnicos t ON t.id = o.id_tecnico
             WHERE o.data BETWEEN ? AND ?
@@ -572,4 +578,123 @@ class RelatorioController:
                 'total_concluidos': row[2] if row[2] else 0,
                 'apu': row[3] if row[3] else 0
             })
+        return resultado
+    
+    # ==================== 7. TOTAL DE OS NO PERÍODO ====================
+    
+    def get_total_os_periodo(self, data_inicio, data_fim, id_tecnico=None):
+        """Retorna o total de OS no período"""
+        conn = self.con.conectar()
+        c = conn.cursor()
+        
+        query = "SELECT COUNT(*) FROM ordem_servico WHERE data BETWEEN ? AND ?"
+        params = [data_inicio, data_fim]
+        
+        if id_tecnico:
+            query += " AND id_tecnico = ?"
+            params.append(id_tecnico)
+        
+        c.execute(query, params)
+        total = c.fetchone()[0]
+        conn.close()
+        
+        return total if total else 0
+    
+    
+    
+    # Adicione este método ao RepetidoController
+
+def get_estatisticas_repetidos(self, mes_referencia, id_tecnico=None):
+    """
+    Retorna estatísticas de repetidos por mês
+    """
+    repetidos = self.get_repetidos_com_detalhes(mes_referencia)
+    
+    # Filtrar por técnico se necessário
+    if id_tecnico:
+        repetidos = [r for r in repetidos if r.get('tecnico_repetido') and 
+                    self._get_tecnico_id_por_nome(r['tecnico_repetido']) == id_tecnico]
+    
+    total_repetidos = len(repetidos)
+    
+    # Contar por status
+    pendentes = len([r for r in repetidos if r.get('procedente') == 0])
+    procedem = len([r for r in repetidos if r.get('procedente') == 1])
+    nao_procedem = len([r for r in repetidos if r.get('procedente') == 2])
+    
+    # Contar por WAN
+    wans_count = {}
+    for r in repetidos:
+        wan = r.get('wan_piloto', 'Desconhecido')
+        wans_count[wan] = wans_count.get(wan, 0) + 1
+    
+    # Top 5 WANs mais repetidas
+    top_wans = sorted(wans_count.items(), key=lambda x: x[1], reverse=True)[:5]
+    
+    return {
+        'total': total_repetidos,
+        'pendentes': pendentes,
+        'procedem': procedem,
+        'nao_procedem': nao_procedem,
+        'top_wans': [{'wan': wan, 'total': total} for wan, total in top_wans]
+    }
+    
+        
+        
+        # Adicione este método ao RelatorioController
+
+    def get_wans_repetidos_resumo(self, data_inicio, data_fim, id_tecnico=None):
+        """
+        Retorna resumo das WANs repetidas no período (calculado dinamicamente)
+        """
+        conn = self.con.conectar()
+        c = conn.cursor()
+        
+        query = """
+            SELECT 
+                wan_piloto,
+                COUNT(*) as total,
+                MIN(data) as primeira_data,
+                MAX(data) as ultima_data
+            FROM ordem_servico
+            WHERE wan_piloto IS NOT NULL 
+            AND wan_piloto != ''
+            AND data BETWEEN ? AND ?
+            GROUP BY wan_piloto
+            HAVING COUNT(*) > 1
+            ORDER BY total DESC
+        """
+        params = [data_inicio, data_fim]
+        
+        if id_tecnico:
+            query = """
+                SELECT 
+                    o.wan_piloto,
+                    COUNT(*) as total,
+                    MIN(o.data) as primeira_data,
+                    MAX(o.data) as ultima_data
+                FROM ordem_servico o
+                WHERE o.wan_piloto IS NOT NULL 
+                AND o.wan_piloto != ''
+                AND o.data BETWEEN ? AND ?
+                AND o.id_tecnico = ?
+                GROUP BY o.wan_piloto
+                HAVING COUNT(*) > 1
+                ORDER BY total DESC
+            """
+            params = [data_inicio, data_fim, id_tecnico]
+        
+        c.execute(query, params)
+        dados = c.fetchall()
+        conn.close()
+        
+        resultado = []
+        for row in dados:
+            resultado.append({
+                'wan': row[0],
+                'total': row[1],
+                'primeira_data': row[2],
+                'ultima_data': row[3]
+            })
+        
         return resultado

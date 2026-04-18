@@ -14,10 +14,11 @@ class RepetidoRepository:
         CREATE TABLE IF NOT EXISTS repetidos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             id_os INTEGER NOT NULL,
-            procedente INTEGER NOT NULL,
-            carimbo_referencia TEXT NOT NULL,
-            carimbo_repetido TEXT NOT NULL,
-            mes_referencia TEXT NOT NULL
+            id_os_referencia INTEGER NOT NULL,
+            procedente INTEGER DEFAULT 0,
+            mes_referencia TEXT NOT NULL,
+            FOREIGN KEY (id_os) REFERENCES ordem_servico (id_os),
+            FOREIGN KEY (id_os_referencia) REFERENCES ordem_servico (id_os)
         )
         """)
         
@@ -28,11 +29,31 @@ class RepetidoRepository:
         conn = self.con.conectar()
         c = conn.cursor()
         
+        # Verificar se os IDs não são None
+        if repetido.id_os is None:
+            print("ERRO: id_os é None!")
+            conn.close()
+            return None
+        
+        if repetido.id_os_referencia is None:
+            print("ERRO: id_os_referencia é None!")
+            conn.close()
+            return None
+        
+        # Verificar se já existe para evitar duplicidade
         c.execute("""
-            INSERT INTO repetidos (id_os, procedente, carimbo_referencia, carimbo_repetido, mes_referencia)
-            VALUES (?, ?, ?, ?, ?)
-        """, (repetido.id_os, repetido.procedente, 
-              repetido.carimbo_referencia, repetido.carimbo_repetido, repetido.mes_referencia))
+            SELECT id FROM repetidos 
+            WHERE id_os = ? AND id_os_referencia = ?
+        """, (repetido.id_os, repetido.id_os_referencia))
+        
+        if c.fetchone():
+            conn.close()
+            return repetido
+        
+        c.execute("""
+            INSERT INTO repetidos (id_os, id_os_referencia, procedente, mes_referencia)
+            VALUES (?, ?, ?, ?)
+        """, (repetido.id_os, repetido.id_os_referencia, repetido.procedente, repetido.mes_referencia))
         
         repetido.id = c.lastrowid
         conn.commit()
@@ -44,7 +65,7 @@ class RepetidoRepository:
         conn = self.con.conectar()
         c = conn.cursor()
         
-        c.execute("SELECT * FROM repetidos")
+        c.execute("SELECT * FROM repetidos ORDER BY mes_referencia DESC, id DESC")
         dados = c.fetchall()
         
         conn.close()
@@ -52,10 +73,9 @@ class RepetidoRepository:
         return [Repetido(
             id=row[0],
             id_os=row[1],
-            procedente=row[2],
-            carimbo_referencia=row[3],
-            carimbo_repetido=row[4],
-            mes_referencia=row[5]
+            id_os_referencia=row[2],
+            procedente=row[3],
+            mes_referencia=row[4]
         ) for row in dados]
     
     def buscar_por_id_os(self, id_os):
@@ -71,10 +91,9 @@ class RepetidoRepository:
             return Repetido(
                 id=row[0],
                 id_os=row[1],
-                procedente=row[2],
-                carimbo_referencia=row[3],
-                carimbo_repetido=row[4],
-                mes_referencia=row[5]
+                id_os_referencia=row[2],
+                procedente=row[3],
+                mes_referencia=row[4]
             )
         return None
     
@@ -83,7 +102,7 @@ class RepetidoRepository:
         conn = self.con.conectar()
         c = conn.cursor()
         
-        c.execute("SELECT * FROM repetidos WHERE mes_referencia = ?", (mes_referencia,))
+        c.execute("SELECT * FROM repetidos WHERE mes_referencia = ? ORDER BY id DESC", (mes_referencia,))
         dados = c.fetchall()
         
         conn.close()
@@ -91,13 +110,22 @@ class RepetidoRepository:
         return [Repetido(
             id=row[0],
             id_os=row[1],
-            procedente=row[2],
-            carimbo_referencia=row[3],
-            carimbo_repetido=row[4],
-            mes_referencia=row[5]
+            id_os_referencia=row[2],
+            procedente=row[3],
+            mes_referencia=row[4]
         ) for row in dados]
     
-    def deletar(self, id_os):
+    def atualizar_procedente(self, id_repetido, procedente):
+        """Atualiza o status de procedência"""
+        conn = self.con.conectar()
+        c = conn.cursor()
+        
+        c.execute("UPDATE repetidos SET procedente = ? WHERE id = ?", (procedente, id_repetido))
+        
+        conn.commit()
+        conn.close()
+    
+    def deletar_por_id_os(self, id_os):
         conn = self.con.conectar()
         c = conn.cursor()
         
@@ -105,3 +133,26 @@ class RepetidoRepository:
         
         conn.commit()
         conn.close()
+    
+    def limpar_todos(self):
+        """Remove todos os registros da tabela"""
+        conn = self.con.conectar()
+        c = conn.cursor()
+        
+        c.execute("DELETE FROM repetidos")
+        
+        conn.commit()
+        conn.close()
+    
+    def get_ids_os_analisados(self):
+        """Retorna os IDs das OS que já foram analisadas"""
+        conn = self.con.conectar()
+        c = conn.cursor()
+        c.execute("SELECT DISTINCT id_os FROM repetidos")
+        dados = c.fetchall()
+        conn.close()
+        return [row[0] for row in dados]
+    
+    
+    
+    

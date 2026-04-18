@@ -1,4 +1,3 @@
-# app/model/repetido.py
 class Repetido:
     def __init__(self, id_os, id_os_referencia, mes_referencia, procedente=0, id=None):
         self.id = id
