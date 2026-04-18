@@ -36,6 +36,19 @@ class Database:
         )
         """)
         
+        # Tabela de repetidos
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS repetidos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_os INTEGER NOT NULL,
+            id_os_referencia INTEGER NOT NULL,
+            procedente INTEGER DEFAULT 0,
+            mes_referencia TEXT NOT NULL,
+            FOREIGN KEY (id_os) REFERENCES ordem_servico (id_os),
+            FOREIGN KEY (id_os_referencia) REFERENCES ordem_servico (id_os)
+        )
+        """)
+        
         conn.commit()
         conn.close()
         print("✅ Tabelas criadas/verificadas com sucesso!")

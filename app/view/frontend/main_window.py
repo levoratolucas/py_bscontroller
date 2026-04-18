@@ -6,6 +6,7 @@ from app.view.frontend.screens.ordem_servico import OrdemServicoScreen
 from app.view.frontend.screens.nova_os import NovaOsScreen
 from app.view.frontend.screens.admin import AdminScreen  # <-- NOVO IMPORT
 from app.view.frontend.screens.relatorios.main import RelatoriosScreen
+from app.view.frontend.screens.repetidos.repetidos_main import RepetidosScreen
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -55,6 +56,7 @@ class MainWindow:
                     ("📝 Inserir OS", "nova_os"),
                     ("📋 Ordem Serviço", "ordem_servico"),
                     ("📈 Relatórios", "relatorios"),
+                    ("🔁 Repetidos", "repetidos"),  # <-- Corrigido
                     ("⚙️ Admin", "admin")
                 ]
         
@@ -91,6 +93,8 @@ class MainWindow:
             self.current_screen = OrdemServicoScreen(self.content_frame, self)
         elif nome_tela == "relatorios":
             self.current_screen = RelatoriosScreen(self.content_frame, self)
+        elif nome_tela == "repetidos":  # <-- ADICIONAR AQUI
+            self.current_screen = RepetidosScreen(self.content_frame, self)
         elif nome_tela == "admin2":
             self.current_screen = QueryTesterScreen(self.content_frame, self)
             return
