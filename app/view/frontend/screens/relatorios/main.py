@@ -7,6 +7,9 @@ from app.controller.ordem_servico_controller import OrdemServicoController
 from app.controller.repetido_controller import RepetidoController
 from app.view.frontend.screens.relatorios.exportar import ExportadorRelatorio
 from app.view.frontend.screens.relatorios.popup_analise import PopupAnalise
+from app.view.frontend.screens.relatorios.cards import (
+    CardPendente, CardRepetido, CardProcede, CardImprocedente
+)
 
 
 class RelatoriosScreen(ctk.CTkFrame):
@@ -23,6 +26,9 @@ class RelatoriosScreen(ctk.CTkFrame):
         self.periodos_producao = []
         self.meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
                      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
+        self.filtro_status_atual = "todos"  # todos, pendentes, procedem, improcedem
+        
+        self.cards = {}
         
         self.setup_ui()
         self.carregar_tecnicos()
@@ -47,7 +53,7 @@ class RelatoriosScreen(ctk.CTkFrame):
         
         ctk.CTkLabel(
             titulo_frame,
-            text="Análise de WANs repetidos e ofensores | Duplo clique para analisar",
+            text="Análise de WANs repetidos | Clique nos cards para filtrar | Duplo clique apenas em PENDENTES",
             font=('Arial', 12),
             text_color="#666666"
         ).pack(anchor="w")
@@ -75,41 +81,29 @@ class RelatoriosScreen(ctk.CTkFrame):
         for i in range(4):
             cards_frame.grid_columnconfigure(i, weight=1)
         
-        # Card 1 - REPETIDO (amarelo)
-        card1 = ctk.CTkFrame(cards_frame, fg_color="#1a1a2e", corner_radius=12, border_width=1, border_color="#ff6b00")
-        card1.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        # Card 1 - PENDENTE (laranja)
+        self.cards['pendente'] = CardPendente(
+            cards_frame, 0, 0,
+            callback=lambda: self.filtrar_por_status("pendentes")
+        )
         
-        ctk.CTkLabel(card1, text="🔄", font=('Arial', 40), text_color="#ff6b00").pack(pady=(15, 5))
-        ctk.CTkLabel(card1, text="REPETIDO", font=('Arial', 16, 'bold'), text_color="#ffffff").pack()
-        self.card_repetido_valor = ctk.CTkLabel(card1, text="0", font=('Arial', 32, 'bold'), text_color="#ff6b00")
-        self.card_repetido_valor.pack(pady=(5, 15))
+        # Card 2 - REPETIDO (amarelo)
+        self.cards['repetido'] = CardRepetido(
+            cards_frame, 0, 1,
+            callback=lambda: self.filtrar_por_status("todos")
+        )
         
-        # Card 2 - PROCEDE (verde)
-        card2 = ctk.CTkFrame(cards_frame, fg_color="#1a1a2e", corner_radius=12, border_width=1, border_color="#00cc66")
-        card2.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+        # Card 3 - PROCEDE (verde)
+        self.cards['procede'] = CardProcede(
+            cards_frame, 0, 2,
+            callback=lambda: self.filtrar_por_status("procedem")
+        )
         
-        ctk.CTkLabel(card2, text="✅", font=('Arial', 40), text_color="#00cc66").pack(pady=(15, 5))
-        ctk.CTkLabel(card2, text="PROCEDE", font=('Arial', 16, 'bold'), text_color="#ffffff").pack()
-        self.card_procede_valor = ctk.CTkLabel(card2, text="0", font=('Arial', 32, 'bold'), text_color="#00cc66")
-        self.card_procede_valor.pack(pady=(5, 15))
-        
-        # Card 3 - IMPROCEDENTE (vermelho)
-        card3 = ctk.CTkFrame(cards_frame, fg_color="#1a1a2e", corner_radius=12, border_width=1, border_color="#ff3333")
-        card3.grid(row=0, column=2, sticky="nsew", padx=5, pady=5)
-        
-        ctk.CTkLabel(card3, text="❌", font=('Arial', 40), text_color="#ff3333").pack(pady=(15, 5))
-        ctk.CTkLabel(card3, text="IMPROCEDENTE", font=('Arial', 16, 'bold'), text_color="#ffffff").pack()
-        self.card_imprcedente_valor = ctk.CTkLabel(card3, text="0", font=('Arial', 32, 'bold'), text_color="#ff3333")
-        self.card_imprcedente_valor.pack(pady=(5, 15))
-        
-        # Card 4 - TÉCNICOS (azul)
-        card4 = ctk.CTkFrame(cards_frame, fg_color="#1a1a2e", corner_radius=12, border_width=1, border_color="#0088ff")
-        card4.grid(row=0, column=3, sticky="nsew", padx=5, pady=5)
-        
-        ctk.CTkLabel(card4, text="👤", font=('Arial', 40), text_color="#0088ff").pack(pady=(15, 5))
-        ctk.CTkLabel(card4, text="TÉCNICOS", font=('Arial', 16, 'bold'), text_color="#ffffff").pack()
-        self.card_tecnicos_valor = ctk.CTkLabel(card4, text="0", font=('Arial', 32, 'bold'), text_color="#0088ff")
-        self.card_tecnicos_valor.pack(pady=(5, 15))
+        # Card 4 - IMPROCEDENTE (vermelho)
+        self.cards['improcedente'] = CardImprocedente(
+            cards_frame, 0, 3,
+            callback=lambda: self.filtrar_por_status("nao_procedem")
+        )
 
         # ================= FILTROS =================
         filtros_frame = ctk.CTkFrame(main_frame, fg_color="#1a1a2e", corner_radius=12)
@@ -176,6 +170,16 @@ class RelatoriosScreen(ctk.CTkFrame):
             command=self.toggle_modo
         )
         self.modo_btn.pack(side="left", padx=(20, 0))
+        
+        # Botão Limpar Filtro de Status
+        ctk.CTkButton(
+            row_filtros,
+            text="🗑️ Limpar Filtro",
+            fg_color="#555555",
+            hover_color="#333333",
+            width=120,
+            command=self.limpar_filtro_status
+        ).pack(side="left", padx=(20, 0))
 
         # ================= CONTAINER PRINCIPAL =================
         main_container = ctk.CTkFrame(main_frame, fg_color="transparent")
@@ -189,12 +193,13 @@ class RelatoriosScreen(ctk.CTkFrame):
         table_wrapper = ctk.CTkFrame(main_container, fg_color="#0f0f0f", corner_radius=12, border_width=1, border_color="#2a2a2a")
         table_wrapper.grid(row=0, column=0, sticky="nsew", padx=(0, 10), pady=0)
         
-        ctk.CTkLabel(
+        self.titulo_tabela = ctk.CTkLabel(
             table_wrapper,
-            text="📋 Histórico de Repetições (Duplo clique para analisar)",
+            text="📋 Histórico de Repetições (Duplo clique apenas em PENDENTES)",
             font=('Arial', 12, 'bold'),
             text_color="#00ff88"
-        ).pack(anchor="w", padx=15, pady=(10, 5))
+        )
+        self.titulo_tabela.pack(anchor="w", padx=15, pady=(10, 5))
         
         table_container = ctk.CTkFrame(table_wrapper, fg_color="transparent")
         table_container.pack(fill="both", expand=True, padx=10, pady=10)
@@ -360,35 +365,174 @@ class RelatoriosScreen(ctk.CTkFrame):
                     return p['inicio'], p['fim']
             return self.periodos_producao[0]['inicio'], self.periodos_producao[0]['fim']
 
-    def carregar_dados(self, data_inicio=None, data_fim=None, id_tecnico=None):
-        """Carrega os dados da tabela e atualiza os cards"""
-        if data_inicio is None or data_fim is None:
-            data_inicio, data_fim = self.obter_periodo()
+    def filtrar_por_status(self, status):
+        """Filtra a tabela pelo status do card clicado"""
+        self.filtro_status_atual = status
+        self.carregar_dados_com_filtro()
         
-        # Usar a nova função do RepetidoController para estatísticas completas
-        estatisticas = self.repetido_controller.get_estatisticas_completas_periodo(
-            data_inicio, data_fim, id_tecnico
-        )
+        # Destacar o card selecionado
+        self.destacar_card_selecionado(status)
+    
+    def destacar_card_selecionado(self, status):
+        """Destaca o card clicado com borda mais grossa"""
+        # Resetar bordas de todos os cards
+        for card in self.cards.values():
+            card.destacar(False)
+        
+        # Destacar o card selecionado
+        if status == "pendentes":
+            self.cards['pendente'].destacar(True)
+            self.titulo_tabela.configure(text="📋 Histórico de Repetições - PENDENTES (⏳)")
+        elif status == "todos":
+            self.cards['repetido'].destacar(True)
+            self.titulo_tabela.configure(text="📋 Histórico de Repetições - TODOS (🔄)")
+        elif status == "procedem":
+            self.cards['procede'].destacar(True)
+            self.titulo_tabela.configure(text="📋 Histórico de Repetições - PROCEDEM (✅)")
+        elif status == "nao_procedem":
+            self.cards['improcedente'].destacar(True)
+            self.titulo_tabela.configure(text="📋 Histórico de Repetições - IMPROCEDEM (❌)")
+    
+    def limpar_filtro_status(self):
+        """Limpa o filtro de status e mostra todos"""
+        self.filtro_status_atual = "todos"
+        self.carregar_dados_com_filtro()
+        self.destacar_card_selecionado("todos")
+    
+    def carregar_dados_com_filtro(self):
+        """Carrega os dados aplicando o filtro de status atual"""
+        data_inicio, data_fim = self.obter_periodo()
+        tecnico = self.tecnico_var.get()
+        
+        id_tecnico = None
+        if tecnico != "Todos":
+            tecnicos = self.relatorio_controller.get_tecnicos()
+            for t in tecnicos:
+                if t['nome'] == tecnico:
+                    id_tecnico = t['id']
+                    break
+        
+        mes_referencia = datetime.strptime(data_inicio, "%Y-%m-%d").strftime("%Y-%m")
+        
+        # Buscar repetidos da tabela (já analisados)
+        repetidos_analisados = self.repetido_controller.get_repetidos_com_detalhes(mes_referencia)
+        
+        # Filtrar por técnico se necessário
+        if id_tecnico:
+            repetidos_analisados = [r for r in repetidos_analisados if r.get('tecnico_repetido') and 
+                                    self._get_tecnico_id_por_nome(r['tecnico_repetido']) == id_tecnico]
+        
+        # Buscar OS pendentes (não analisadas)
+        os_pendentes = self.relatorio_controller.get_os_repetidas_apenas(data_inicio, data_fim, id_tecnico)
+        ids_analisados = self.repetido_controller.get_ids_os_analisados()
+        os_pendentes = [os for os in os_pendentes if os.get('id_os') not in ids_analisados]
+        
+        # Contar por status
+        total_pendentes = len(os_pendentes)
+        total_procedem = len([r for r in repetidos_analisados if r.get('procedente') == 1])
+        total_improcedem = len([r for r in repetidos_analisados if r.get('procedente') == 2])
+        total_repetidos = total_pendentes + total_procedem + total_improcedem
         
         # Atualizar cards
-        self.card_repetido_valor.configure(text=str(estatisticas['total_repetidos']))
-        self.card_procede_valor.configure(text=str(estatisticas['procedentes']))
-        self.card_imprcedente_valor.configure(text=str(estatisticas['nao_procedentes']))
+        self.cards['pendente'].set_valor(total_pendentes)
+        self.cards['repetido'].set_valor(total_repetidos)
+        self.cards['procede'].set_valor(total_procedem)
+        self.cards['improcedente'].set_valor(total_improcedem)
         
-        # Total de técnicos (ainda do relatorio_controller)
-        tecnicos = self.relatorio_controller.get_tecnicos()
-        if id_tecnico:
-            # Se tem filtro, mostra 1 técnico
-            self.card_tecnicos_valor.configure(text="1")
-        else:
-            self.card_tecnicos_valor.configure(text=str(len(tecnicos)))
+        # Preparar dados para a tabela conforme o filtro
+        if self.filtro_status_atual == "pendentes":
+            dados_tabela = []
+            for os in os_pendentes:
+                dados_tabela.append({
+                    'numero': os.get('numero', '-'),
+                    'wan_piloto': os.get('wan_piloto', '-'),
+                    'tecnico': os.get('tecnico', '-'),
+                    'data': os.get('data', '-'),
+                    'inicio_execucao': os.get('inicio_execucao', '-'),
+                    'fim_execucao': os.get('fim_execucao', '-'),
+                    'status_nome': os.get('status_nome', '-'),
+                    'observacao': '⏳ Pendente',
+                    'pendente': True,
+                    'id_os': os.get('id_os')
+                })
+        elif self.filtro_status_atual == "procedem":
+            dados_tabela = []
+            for r in repetidos_analisados:
+                if r.get('procedente') == 1:
+                    dados_tabela.append({
+                        'numero': r.get('numero_repetido', '-'),
+                        'wan_piloto': r.get('wan_piloto', '-'),
+                        'tecnico': r.get('tecnico_repetido', '-'),
+                        'data': r.get('data_repetido', '-'),
+                        'inicio_execucao': r.get('hora_repetido', '-'),
+                        'fim_execucao': '-',
+                        'status_nome': 'Concluído' if r.get('status_repetido') == 1 else 'Suspenso',
+                        'observacao': '✅ Procede',
+                        'pendente': False,
+                        'id_os': r.get('id_os'),
+                        'numero_referencia': r.get('numero_referencia'),
+                        'tecnico_referencia': r.get('tecnico_referencia'),
+                        'data_referencia': r.get('data_referencia'),
+                        'carimbo_referencia': r.get('carimbo_referencia'),
+                        'carimbo_repetido': r.get('carimbo_repetido')
+                    })
+        elif self.filtro_status_atual == "nao_procedem":
+            dados_tabela = []
+            for r in repetidos_analisados:
+                if r.get('procedente') == 2:
+                    dados_tabela.append({
+                        'numero': r.get('numero_repetido', '-'),
+                        'wan_piloto': r.get('wan_piloto', '-'),
+                        'tecnico': r.get('tecnico_repetido', '-'),
+                        'data': r.get('data_repetido', '-'),
+                        'inicio_execucao': r.get('hora_repetido', '-'),
+                        'fim_execucao': '-',
+                        'status_nome': 'Concluído' if r.get('status_repetido') == 1 else 'Suspenso',
+                        'observacao': '❌ Não Procede',
+                        'pendente': False,
+                        'id_os': r.get('id_os'),
+                        'numero_referencia': r.get('numero_referencia'),
+                        'tecnico_referencia': r.get('tecnico_referencia'),
+                        'data_referencia': r.get('data_referencia'),
+                        'carimbo_referencia': r.get('carimbo_referencia'),
+                        'carimbo_repetido': r.get('carimbo_repetido')
+                    })
+        else:  # "todos" - mostrar todos (pendentes + analisados)
+            dados_tabela = []
+            for os in os_pendentes:
+                dados_tabela.append({
+                    'numero': os.get('numero', '-'),
+                    'wan_piloto': os.get('wan_piloto', '-'),
+                    'tecnico': os.get('tecnico', '-'),
+                    'data': os.get('data', '-'),
+                    'inicio_execucao': os.get('inicio_execucao', '-'),
+                    'fim_execucao': os.get('fim_execucao', '-'),
+                    'status_nome': os.get('status_nome', '-'),
+                    'observacao': '⏳ Pendente',
+                    'pendente': True,
+                    'id_os': os.get('id_os')
+                })
+            for r in repetidos_analisados:
+                status_texto = {1: "✅ Procede", 2: "❌ Não Procede"}
+                dados_tabela.append({
+                    'numero': r.get('numero_repetido', '-'),
+                    'wan_piloto': r.get('wan_piloto', '-'),
+                    'tecnico': r.get('tecnico_repetido', '-'),
+                    'data': r.get('data_repetido', '-'),
+                    'inicio_execucao': r.get('hora_repetido', '-'),
+                    'fim_execucao': '-',
+                    'status_nome': 'Concluído' if r.get('status_repetido') == 1 else 'Suspenso',
+                    'observacao': status_texto.get(r.get('procedente', 0), 'Desconhecido'),
+                    'pendente': False,
+                    'id_os': r.get('id_os'),
+                    'numero_referencia': r.get('numero_referencia'),
+                    'tecnico_referencia': r.get('tecnico_referencia'),
+                    'data_referencia': r.get('data_referencia'),
+                    'carimbo_referencia': r.get('carimbo_referencia'),
+                    'carimbo_repetido': r.get('carimbo_repetido')
+                })
         
-        # Buscar OS repetidas (que ainda NÃO foram analisadas - pendentes)
-        self.dados_atuais = self.relatorio_controller.get_os_repetidas_apenas(data_inicio, data_fim, id_tecnico)
-        
-        # Filtrar OS que já foram analisadas (remover da lista)
-        ids_analisados = self.repetido_controller.get_ids_os_analisados()
-        self.dados_atuais = [os for os in self.dados_atuais if os.get('id_os') not in ids_analisados]
+        self.dados_atuais = dados_tabela
         
         # Limpar treeview
         for item in self.tree.get_children():
@@ -397,11 +541,6 @@ class RelatoriosScreen(ctk.CTkFrame):
         # Preencher treeview
         for i, item in enumerate(self.dados_atuais):
             tag = 'even' if i % 2 == 0 else 'odd'
-            
-            # Mapear status de procedência para observação
-            status_map = {0: "⏳ Pendente", 1: "✅ Procede", 2: "❌ Não Procede"}
-            observacao = status_map.get(item.get('procedente', 0), "Pendente")
-            
             self.tree.insert("", "end", values=(
                 item.get('numero', '-'),
                 item.get('wan_piloto', '-'),
@@ -410,14 +549,170 @@ class RelatoriosScreen(ctk.CTkFrame):
                 item.get('inicio_execucao', '-'),
                 item.get('fim_execucao', '-'),
                 item.get('status_nome', '-'),
-                observacao
+                item.get('observacao', '-')
+            ), tags=(tag,), iid=str(i))
+        
+        self.tree.tag_configure('even', background='#0f0f0f')
+        self.tree.tag_configure('odd', background='#1a1a2e')
+
+    def _get_tecnico_id_por_nome(self, nome):
+        """Retorna o ID do técnico pelo nome"""
+        tecnicos = self.relatorio_controller.get_tecnicos()
+        for t in tecnicos:
+            if t['nome'] == nome:
+                return t['id']
+        return None
+
+    def carregar_dados(self, data_inicio=None, data_fim=None, id_tecnico=None):
+        """Carrega os dados da tabela e atualiza os cards"""
+        if data_inicio is None or data_fim is None:
+            data_inicio, data_fim = self.obter_periodo()
+        
+        mes_referencia = datetime.strptime(data_inicio, "%Y-%m-%d").strftime("%Y-%m")
+        
+        # Buscar repetidos da tabela (já analisados)
+        repetidos_analisados = self.repetido_controller.get_repetidos_com_detalhes(mes_referencia)
+        
+        # Filtrar por técnico se necessário
+        if id_tecnico:
+            repetidos_analisados = [r for r in repetidos_analisados if r.get('tecnico_repetido') and 
+                                    self._get_tecnico_id_por_nome(r['tecnico_repetido']) == id_tecnico]
+        
+        # Buscar OS pendentes (não analisadas)
+        os_pendentes = self.relatorio_controller.get_os_repetidas_apenas(data_inicio, data_fim, id_tecnico)
+        ids_analisados = self.repetido_controller.get_ids_os_analisados()
+        os_pendentes = [os for os in os_pendentes if os.get('id_os') not in ids_analisados]
+        
+        # Contar por status
+        total_pendentes = len(os_pendentes)
+        total_procedem = len([r for r in repetidos_analisados if r.get('procedente') == 1])
+        total_improcedem = len([r for r in repetidos_analisados if r.get('procedente') == 2])
+        total_repetidos = total_pendentes + total_procedem + total_improcedem
+        
+        # Atualizar cards
+        self.cards['pendente'].set_valor(total_pendentes)
+        self.cards['repetido'].set_valor(total_repetidos)
+        self.cards['procede'].set_valor(total_procedem)
+        self.cards['improcedente'].set_valor(total_improcedem)
+        
+        # Preparar dados para a tabela conforme o filtro atual
+        if self.filtro_status_atual == "pendentes":
+            dados_tabela = []
+            for os in os_pendentes:
+                dados_tabela.append({
+                    'numero': os.get('numero', '-'),
+                    'wan_piloto': os.get('wan_piloto', '-'),
+                    'tecnico': os.get('tecnico', '-'),
+                    'data': os.get('data', '-'),
+                    'inicio_execucao': os.get('inicio_execucao', '-'),
+                    'fim_execucao': os.get('fim_execucao', '-'),
+                    'status_nome': os.get('status_nome', '-'),
+                    'observacao': '⏳ Pendente',
+                    'pendente': True,
+                    'id_os': os.get('id_os')
+                })
+        elif self.filtro_status_atual == "procedem":
+            dados_tabela = []
+            for r in repetidos_analisados:
+                if r.get('procedente') == 1:
+                    dados_tabela.append({
+                        'numero': r.get('numero_repetido', '-'),
+                        'wan_piloto': r.get('wan_piloto', '-'),
+                        'tecnico': r.get('tecnico_repetido', '-'),
+                        'data': r.get('data_repetido', '-'),
+                        'inicio_execucao': r.get('hora_repetido', '-'),
+                        'fim_execucao': '-',
+                        'status_nome': 'Concluído' if r.get('status_repetido') == 1 else 'Suspenso',
+                        'observacao': '✅ Procede',
+                        'pendente': False,
+                        'id_os': r.get('id_os'),
+                        'numero_referencia': r.get('numero_referencia'),
+                        'tecnico_referencia': r.get('tecnico_referencia'),
+                        'data_referencia': r.get('data_referencia'),
+                        'carimbo_referencia': r.get('carimbo_referencia'),
+                        'carimbo_repetido': r.get('carimbo_repetido')
+                    })
+        elif self.filtro_status_atual == "nao_procedem":
+            dados_tabela = []
+            for r in repetidos_analisados:
+                if r.get('procedente') == 2:
+                    dados_tabela.append({
+                        'numero': r.get('numero_repetido', '-'),
+                        'wan_piloto': r.get('wan_piloto', '-'),
+                        'tecnico': r.get('tecnico_repetido', '-'),
+                        'data': r.get('data_repetido', '-'),
+                        'inicio_execucao': r.get('hora_repetido', '-'),
+                        'fim_execucao': '-',
+                        'status_nome': 'Concluído' if r.get('status_repetido') == 1 else 'Suspenso',
+                        'observacao': '❌ Não Procede',
+                        'pendente': False,
+                        'id_os': r.get('id_os'),
+                        'numero_referencia': r.get('numero_referencia'),
+                        'tecnico_referencia': r.get('tecnico_referencia'),
+                        'data_referencia': r.get('data_referencia'),
+                        'carimbo_referencia': r.get('carimbo_referencia'),
+                        'carimbo_repetido': r.get('carimbo_repetido')
+                    })
+        else:  # "todos" - mostrar todos
+            dados_tabela = []
+            for os in os_pendentes:
+                dados_tabela.append({
+                    'numero': os.get('numero', '-'),
+                    'wan_piloto': os.get('wan_piloto', '-'),
+                    'tecnico': os.get('tecnico', '-'),
+                    'data': os.get('data', '-'),
+                    'inicio_execucao': os.get('inicio_execucao', '-'),
+                    'fim_execucao': os.get('fim_execucao', '-'),
+                    'status_nome': os.get('status_nome', '-'),
+                    'observacao': '⏳ Pendente',
+                    'pendente': True,
+                    'id_os': os.get('id_os')
+                })
+            for r in repetidos_analisados:
+                status_texto = {1: "✅ Procede", 2: "❌ Não Procede"}
+                dados_tabela.append({
+                    'numero': r.get('numero_repetido', '-'),
+                    'wan_piloto': r.get('wan_piloto', '-'),
+                    'tecnico': r.get('tecnico_repetido', '-'),
+                    'data': r.get('data_repetido', '-'),
+                    'inicio_execucao': r.get('hora_repetido', '-'),
+                    'fim_execucao': '-',
+                    'status_nome': 'Concluído' if r.get('status_repetido') == 1 else 'Suspenso',
+                    'observacao': status_texto.get(r.get('procedente', 0), 'Desconhecido'),
+                    'pendente': False,
+                    'id_os': r.get('id_os'),
+                    'numero_referencia': r.get('numero_referencia'),
+                    'tecnico_referencia': r.get('tecnico_referencia'),
+                    'data_referencia': r.get('data_referencia'),
+                    'carimbo_referencia': r.get('carimbo_referencia'),
+                    'carimbo_repetido': r.get('carimbo_repetido')
+                })
+        
+        self.dados_atuais = dados_tabela
+        
+        # Limpar treeview
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        
+        # Preencher treeview
+        for i, item in enumerate(self.dados_atuais):
+            tag = 'even' if i % 2 == 0 else 'odd'
+            self.tree.insert("", "end", values=(
+                item.get('numero', '-'),
+                item.get('wan_piloto', '-'),
+                item.get('tecnico', '-'),
+                item.get('data', '-'),
+                item.get('inicio_execucao', '-'),
+                item.get('fim_execucao', '-'),
+                item.get('status_nome', '-'),
+                item.get('observacao', '-')
             ), tags=(tag,), iid=str(i))
         
         self.tree.tag_configure('even', background='#0f0f0f')
         self.tree.tag_configure('odd', background='#1a1a2e')
 
     def on_linha_selecionada(self, event):
-        """Quando seleciona uma linha, mostra os carimbos"""
+        """Quando seleciona uma linha, mostra os carimbos (para todas as OS)"""
         selection = self.tree.selection()
         if not selection:
             return
@@ -428,6 +723,7 @@ class RelatoriosScreen(ctk.CTkFrame):
         if not valores:
             return
         
+        # Buscar a OS selecionada
         os_selecionada = None
         for os in self.dados_atuais:
             if str(os.get('numero')) == str(valores[0]):
@@ -440,22 +736,36 @@ class RelatoriosScreen(ctk.CTkFrame):
         data_inicio, data_fim = self.obter_periodo()
         wan = os_selecionada.get('wan_piloto')
         
-        os_referencia = self.relatorio_controller.get_os_anterior(
-            wan, 
-            os_selecionada.get('data'), 
-            os_selecionada.get('inicio_execucao', '00:00'),
-            data_inicio, 
-            data_fim
-        )
+        # Verificar se é pendente ou já analisada
+        is_pendente = os_selecionada.get('pendente', False)
         
-        carimbo_selecionada = self.buscar_carimbo_por_numero(os_selecionada.get('numero'))
-        texto_selecionada = f"📝 CARIMBO:\n{carimbo_selecionada}"
-        
-        if os_referencia:
-            carimbo_referencia = self.buscar_carimbo_por_numero(os_referencia.get('numero'))
-            texto_referencia = f"📌 OS: {os_referencia['numero']} | 👤 {os_referencia['tecnico']} | 📅 {os_referencia['data']}\n\n📝 CARIMBO:\n{carimbo_referencia}"
+        if is_pendente:
+            # Buscar OS de referência para pendentes (dinamicamente)
+            os_referencia = self.relatorio_controller.get_os_anterior(
+                wan, 
+                os_selecionada.get('data'), 
+                os_selecionada.get('inicio_execucao', '00:00'),
+                data_inicio, 
+                data_fim
+            )
+            
+            carimbo_selecionada = self.buscar_carimbo_por_numero(os_selecionada.get('numero'))
+            texto_selecionada = f"📝 CARIMBO:\n{carimbo_selecionada}"
+            
+            if os_referencia:
+                carimbo_referencia = self.buscar_carimbo_por_numero(os_referencia.get('numero'))
+                texto_referencia = f"📌 OS: {os_referencia['numero']} | 👤 {os_referencia['tecnico']} | 📅 {os_referencia['data']}\n\n📝 CARIMBO:\n{carimbo_referencia}"
+            else:
+                texto_referencia = "Nenhuma OS de referência encontrada"
         else:
-            texto_referencia = "Nenhuma OS de referência encontrada"
+            # OS já analisada - usar os dados já salvos na tabela repetidos
+            carimbo_selecionada = os_selecionada.get('carimbo_repetido', 'Carimbo não disponível')
+            texto_selecionada = f"📝 CARIMBO:\n{carimbo_selecionada}"
+            
+            if os_selecionada.get('numero_referencia'):
+                texto_referencia = f"📌 OS: {os_selecionada.get('numero_referencia', '-')} | 👤 {os_selecionada.get('tecnico_referencia', '-')} | 📅 {os_selecionada.get('data_referencia', '-')}\n\n📝 CARIMBO:\n{os_selecionada.get('carimbo_referencia', 'Carimbo não disponível')}"
+            else:
+                texto_referencia = "Nenhuma OS de referência encontrada"
         
         self.texto_selecionada.delete("1.0", "end")
         self.texto_selecionada.insert("1.0", texto_selecionada)
@@ -494,7 +804,7 @@ class RelatoriosScreen(ctk.CTkFrame):
     # ================= POPUP DE ANÁLISE =================
     
     def abrir_popup_analise(self, event=None):
-        """Abre popup para análise do repetido (duplo clique)"""
+        """Abre popup para análise do repetido (apenas para pendentes)"""
         selection = self.tree.selection()
         if not selection:
             messagebox.showwarning("Aviso", "Selecione um repetido para analisar!")
@@ -515,6 +825,11 @@ class RelatoriosScreen(ctk.CTkFrame):
         
         if not os_selecionada:
             messagebox.showerror("Erro", "OS não encontrada!")
+            return
+        
+        # VERIFICAR SE É PENDENTE (apenas pendentes podem ser analisadas)
+        if not os_selecionada.get('pendente', False):
+            messagebox.showwarning("Aviso", "Esta OS já foi analisada! Apenas OS pendentes podem ser analisadas.")
             return
         
         # Verificar se tem id_os
