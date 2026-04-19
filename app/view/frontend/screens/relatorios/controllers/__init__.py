@@ -1,3 +1,3 @@
-from app.view.frontend.screens.relatorios.controllers.dados import DadosRelatorio
+from app.view.frontend.screens.relatorios.controllers.eventos import EventoController
 
-__all__ = ['DadosRelatorio']
+__all__ = ['EventoController']
