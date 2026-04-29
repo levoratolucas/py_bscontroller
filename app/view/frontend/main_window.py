@@ -1,10 +1,9 @@
 import customtkinter as ctk
-from app.view.frontend.screens.query_tester import QueryTesterScreen
 from app.view.frontend.styles import COLORS
-from app.view.frontend.screens.dashboard import DashboardScreen
+from app.view.frontend.screens.dashboard.main import DashboardScreen
 from app.view.frontend.screens.ordem_servico import OrdemServicoScreen
 from app.view.frontend.screens.nova_os import NovaOsScreen
-from app.view.frontend.screens.admin import AdminScreen  # <-- NOVO IMPORT
+from app.view.frontend.screens.admin import AdminScreen
 from app.view.frontend.screens.relatorios.main import RelatoriosScreen
 from app.view.frontend.screens.repetidos.repetidos_main import RepetidosScreen
 
@@ -33,7 +32,7 @@ class MainWindow:
         self.current_screen = None
         
         # Mostrar dashboard inicial
-        self.mostrar_tela("dashboard")
+        self.mostrar_tela("ordem_servico")
         
         self.root.mainloop()
     
@@ -52,13 +51,11 @@ class MainWindow:
         
         # Botões do menu
         botoes = [
-                    ("📊 Dashboard", "dashboard"),
-                    ("📝 Inserir OS", "nova_os"),
-                    ("📋 Ordem Serviço", "ordem_servico"),
-                    ("📈 Relatórios", "relatorios"),
-                    ("🔁 Repetidos", "repetidos"),  # <-- Corrigido
-                    ("⚙️ Admin", "admin")
-                ]
+            ("📝 Inserir OS", "nova_os"),
+            ("📋 Ordem Serviço", "ordem_servico"),
+            ("📈 Relatórios", "relatorios"),
+            ("🔧 Admin", "admin")
+        ]
         
         for texto, pagina in botoes:
             btn = ctk.CTkButton(
@@ -85,45 +82,19 @@ class MainWindow:
         if self.current_screen:
             self.current_screen.destroy()
         
-        if nome_tela == "dashboard":
-            self.current_screen = DashboardScreen(self.content_frame, self)
-        elif nome_tela == "nova_os":
+        if nome_tela == "nova_os":
             self.current_screen = NovaOsScreen(self.content_frame, self)
         elif nome_tela == "ordem_servico":
             self.current_screen = OrdemServicoScreen(self.content_frame, self)
         elif nome_tela == "relatorios":
             self.current_screen = RelatoriosScreen(self.content_frame, self)
-        elif nome_tela == "repetidos":  # <-- ADICIONAR AQUI
+        elif nome_tela == "repetidos":
             self.current_screen = RepetidosScreen(self.content_frame, self)
         elif nome_tela == "admin":
-            self.current_screen = QueryTesterScreen(self.content_frame, self)
-            return
-        
-        elif nome_tela == "admin2":
-            self.current_screen = AdminScreen(self.content_frame, self)  # <-- NOVA TELA
-            # NÃO TEM RETURN AQUI
+            self.current_screen = AdminScreen(self.content_frame, self)
         
         if self.current_screen:
             self.current_screen.pack(fill="both", expand=True)
-    
-    def consultar_os(self):
-        from tkinter import messagebox, simpledialog
-        from app.controller.ordem_servico_controller import OrdemServicoController
-        
-        numero = simpledialog.askstring("Consultar OS", "Digite o Nº da OS:")
-        if numero:
-            os_controller = OrdemServicoController()
-            os = os_controller.buscar_por_numero(numero)
-            if os:
-                messagebox.showinfo("OS Encontrada", 
-                    f"Nº OS: {os['numero']}\n"
-                    f"Técnico: {os['tecnico_nome']}\n"
-                    f"WAN/Piloto: {os['wan_piloto']}\n"
-                    f"Tipo: {os['tipo_nome']}\n"
-                    f"Status: {os['status_nome']}\n"
-                    f"Data: {os['data']}")
-            else:
-                messagebox.showwarning("Não encontrado", f"OS {numero} não encontrada!")
     
     def sair(self):
         self.root.destroy()
